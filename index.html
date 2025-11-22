@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Asstrallity Mods</title>
+    <title>Asstrallity Loader</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet"
@@ -22,7 +22,6 @@
             user-select: none;
         }
 
-        /* Снежинки */
         .snowflake {
             position: absolute;
             color: rgba(210, 230, 255, 0.95);
@@ -66,6 +65,7 @@
             position: relative;
             z-index: 1;
         }
+
         .logo i {
             color: #8bb6db;
             filter: drop-shadow(0 0 10px rgba(139, 182, 219, 0.5));
@@ -79,6 +79,7 @@
             position: relative;
             z-index: 1;
         }
+
         .nav-tab {
             padding: 12px 15px;
             background: transparent;
@@ -93,19 +94,68 @@
             align-items: center;
             gap: 10px;
         }
+
         .nav-tab:hover {
             background: rgba(139, 182, 219, 0.08);
             color: #e8f4fa;
         }
+
         .nav-tab.active {
             background: rgba(139, 182, 219, 0.12);
             color: #e8f4fa;
             font-weight: 500;
             border-left: 2px solid #8bb6db;
         }
+
         .nav-tab i {
             width: 20px;
             text-align: center;
+        }
+
+        .status-box {
+            margin-top: auto;
+            padding: 20px;
+            background: rgba(21, 26, 33, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(139, 182, 219, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-line {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4a9eff;
+            box-shadow: 0 0 15px rgba(74, 158, 255, 0.8);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%      { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: #a0b0c0;
+            font-weight: 500;
+        }
+
+        .status-text.connected { color: #8bb6db; }
+        .status-text.disconnected { color: #ff6b6b; }
+
+        .status-pulse.disconnected {
+            background: #ff6b6b;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+            animation: none;
         }
 
         .content {
@@ -113,7 +163,7 @@
             padding: 30px;
             overflow-y: auto;
             background: linear-gradient(135deg, #0f1419 0%, #151a21 100%);
-            position: relative; /* ВАЖНО: чтобы абсолютный updateToast цеплялся к content */
+            position: relative; /* важно для прикреплённого окна обновления */
             z-index: 1;
         }
 
@@ -129,10 +179,12 @@
             position: relative;
             z-index: 1;
         }
+
         .tab-content.active {
             display: block;
             animation: fadeIn 0.3s;
         }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -144,6 +196,7 @@
             justify-content: space-between;
             margin-bottom: 25px;
         }
+
         .content-header h2 {
             font-family: "Rajdhani", sans-serif;
             margin: 0;
@@ -169,18 +222,22 @@
             font-family: "Roboto", sans-serif;
             font-weight: 500;
         }
+
         .refresh-btn:hover {
             background: rgba(139, 182, 219, 0.12);
             border-color: rgba(139, 182, 219, 0.25);
             color: #e8f4fa;
         }
+
         .refresh-btn i {
             font-size: 14px;
             transition: transform 0.6s;
         }
+
         .refresh-btn.loading i {
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to   { transform: rotate(360deg); }
@@ -191,6 +248,7 @@
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
+
         .mod-card {
             background: rgba(21, 26, 33, 0.6);
             backdrop-filter: blur(10px);
@@ -200,11 +258,13 @@
             border: 1px solid rgba(139, 182, 219, 0.1);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
+
         .mod-card:hover {
             transform: translateY(-5px);
             border-color: rgba(139, 182, 219, 0.3);
             box-shadow: 0 10px 30px rgba(139, 182, 219, 0.15);
         }
+
         .mod-img {
             width: 100%;
             height: 170px;
@@ -212,13 +272,16 @@
             background: linear-gradient(135deg, #1a2028 0%, #0f1419 100%);
             border-bottom: 1px solid rgba(139, 182, 219, 0.1);
         }
+
         .mod-body { padding: 20px; }
+
         .mod-title {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 8px;
             color: #e8f4fa;
         }
+
         .mod-author {
             font-size: 12px;
             color: #7a8a9a;
@@ -227,7 +290,9 @@
             align-items: center;
             gap: 5px;
         }
+
         .mod-author i { font-size: 12px; }
+
         .mod-desc {
             font-size: 13px;
             color: #a0b0c0;
@@ -253,12 +318,14 @@
             transition: all 0.3s ease;
             border: 1px solid rgba(139, 182, 219, 0.2);
         }
+
         .btn:hover {
             background: linear-gradient(135deg, rgba(139, 182, 219, 0.25) 0%, rgba(139, 182, 219, 0.15) 100%);
             border-color: rgba(139, 182, 219, 0.4);
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(139, 182, 219, 0.2);
         }
+
         .btn:active { transform: scale(0.98); }
 
         .settings-section {
@@ -270,6 +337,7 @@
             border: 1px solid rgba(139, 182, 219, 0.16);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
         }
+
         .settings-section h3 {
             font-family: "Rajdhani", sans-serif;
             font-size: 22px;
@@ -279,19 +347,23 @@
             align-items: center;
             gap: 10px;
         }
+
         .settings-section h3 i { color: #8bb6db; }
 
         .setting-item { margin-bottom: 10px; }
+
         .setting-item label {
             display: block;
             margin-bottom: 8px;
             color: #c1cfdd;
             font-size: 14px;
         }
+
         .install-methods {
             display: flex;
             gap: 10px;
         }
+
         .install-method-pill {
             flex: 1 1 0;
             border-radius: 10px;
@@ -305,24 +377,29 @@
             gap: 4px;
             transition: all 0.2s ease;
         }
+
         .install-method-pill:hover {
             border-color: rgba(139, 182, 219, 0.45);
             background: rgba(18, 24, 33, 0.96);
         }
+
         .install-method-pill.active {
             border-color: #8bb6db;
             background: linear-gradient(135deg, rgba(139, 182, 219, 0.18) 0%, rgba(20, 26, 35, 0.98) 100%);
             box-shadow: 0 0 0 1px rgba(139, 182, 219, 0.5), 0 8px 22px rgba(0, 0, 0, 0.7);
         }
+
         .install-method-title {
             font-size: 14px;
             color: #e8f4fa;
             font-weight: 600;
         }
+
         .install-method-desc {
             font-size: 12px;
             color: #c1cfdd;
         }
+
         .install-method-note {
             margin-top: 10px;
             font-size: 13px;
@@ -338,240 +415,23 @@
             border: 1px solid rgba(139, 182, 219, 0.16);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
         }
+
         .info-title {
             font-family: "Rajdhani", sans-serif;
             font-size: 22px;
             margin: 0 0 10px 0;
             color: #e8f4fa;
         }
+
         .info-text {
             margin: 0 0 16px 0;
             font-size: 14px;
             color: #c1cfdd;
         }
 
-        .status-box {
-            margin-top: auto;
-            padding: 20px;
-            background: rgba(21, 26, 33, 0.5);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            border: 1px solid rgba(139, 182, 219, 0.15);
-            position: relative;
-            z-index: 1;
-        }
-        .status-line {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .status-pulse {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #4a9eff;
-            box-shadow: 0 0 15px rgba(74, 158, 255, 0.8);
-            animation: pulse-glow 2s ease-in-out infinite;
-        }
-        @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50%      { transform: scale(1.2); opacity: 0.7; }
-        }
-        .status-text {
-            font-size: 13px;
-            color: #a0b0c0;
-            font-weight: 500;
-        }
-        .status-text.connected { color: #8bb6db; }
-        .status-text.disconnected { color: #ff6b6b; }
-        .status-pulse.disconnected {
-            background: #ff6b6b;
-            box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
-            animation: none;
-        }
-
-        .loading { color: #7a8a9a; font-size: 14px; }
-        .error {
-            color: #ff6b6b;
-            padding: 20px;
-            background: rgba(255, 107, 107, 0.08);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 107, 107, 0.2);
-        }
-
-        /* Модалка установки модов */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .modal-dialog {
-            background: rgba(21, 26, 33, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(139, 182, 219, 0.2);
-            border-radius: 15px;
-            width: 450px;
-            max-width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            transform: scale(0.9) translateY(20px);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.show .modal-dialog {
-            transform: scale(1) translateY(0);
-        }
-
-        .modal-header {
-            padding: 22px 25px;
-            border-bottom: 1px solid rgba(139, 182, 219, 0.15);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .modal-header i {
-            font-size: 22px;
-            color: #8bb6db;
-        }
-        .modal-title {
-            font-family: "Rajdhani", sans-serif;
-            font-size: 22px;
-            font-weight: 600;
-            color: #e8f4fa;
-            flex: 1;
-        }
-        .modal-close {
-            width: 32px;
-            height: 32px;
-            background: transparent;
-            border: none;
-            color: #7a8a9a;
-            font-size: 18px;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-close:hover {
-            background: rgba(139, 182, 219, 0.1);
-            color: #e8f4fa;
-        }
-
-        .modal-body { padding: 25px; }
-        .modal-message {
-            color: #a0b0c0;
-            font-size: 15px;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 10px;
-            background: rgba(15, 20, 25, 0.6);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-            margin-top: 15px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(139, 182, 219, 0.1);
-        }
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #4a9eff 0%, #8bb6db 50%, #4a9eff 100%);
-            background-size: 200% 100%;
-            border-radius: 10px;
-            width: 0%;
-            transition: width 0.4s ease;
-            animation: shimmer 1.8s infinite;
-            box-shadow: 0 0 15px rgba(74, 158, 255, 0.5);
-        }
-        @keyframes shimmer {
-            0%   { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .progress-text {
-            text-align: center;
-            color: #8bb6db;
-            font-size: 13px;
-            margin-top: 12px;
-            font-weight: 500;
-        }
-
-        .status-message {
-            display: none;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            border-radius: 10px;
-            margin-top: 18px;
-            font-size: 14px;
-            animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .status-message.show { display: flex; }
-        .status-message.success {
-            background: rgba(74, 158, 255, 0.15);
-            border: 1px solid rgba(74, 158, 255, 0.3);
-            color: #4a9eff;
-        }
-        .status-message.error {
-            background: rgba(255, 107, 107, 0.15);
-            border: 1px solid rgba(255, 107, 107, 0.3);
-            color: #ff6b6b;
-        }
-        .status-message i { font-size: 20px; }
-
-        .modal-footer {
-            padding: 18px 25px;
-            border-top: 1px solid rgba(139, 182, 219, 0.15);
-            display: none;
-            justify-content: flex-end;
-        }
-        .modal-footer.show { display: flex; }
-
-        .modal-btn {
-            padding: 11px 28px;
-            background: linear-gradient(135deg, rgba(139, 182, 219, 0.15) 0%, rgba(139, 182, 219, 0.08) 100%);
-            border: 1px solid rgba(139, 182, 219, 0.2);
-            color: #8bb6db;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-        .modal-btn:hover {
-            background: linear-gradient(135deg, rgba(139, 182, 219, 0.25) 0%, rgba(139, 182, 219, 0.15) 100%);
-            border-color: rgba(139, 182, 219, 0.4);
-            transform: translateY(-2px);
-        }
-
-        #game-path-input { display: none; }
-
-        /* Модальное окно обновления, прикреплённое к content */
+        /* окно обновления, прикреплённое к основному контенту */
         #updateToast {
-            position: absolute;   /* ключевой момент: внутри .content */
+            position: absolute;
             right: 32px;
             bottom: 32px;
             width: 420px;
@@ -582,12 +442,14 @@
             box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85);
             padding: 18px 20px 16px;
             display: none;
-            z-index: 50;  /* выше контента, но ниже глобальных модалок */
+            z-index: 50;
         }
+
         #updateToast.show {
             display: block;
             animation: fadeInUpRight 0.25s ease-out;
         }
+
         @keyframes fadeInUpRight {
             from { opacity: 0; transform: translate(10px, 10px); }
             to   { opacity: 1; transform: translate(0, 0); }
@@ -599,6 +461,7 @@
             justify-content: space-between;
             margin-bottom: 10px;
         }
+
         .update-toast-title {
             display: flex;
             align-items: center;
@@ -607,6 +470,7 @@
             font-size: 18px;
             color: #e8f4fa;
         }
+
         .update-toast-title i { color: #8bb6db; }
 
         .update-toast-close {
@@ -622,6 +486,7 @@
             align-items: center;
             justify-content: center;
         }
+
         .update-toast-close:hover {
             background: rgba(148, 197, 255, 0.08);
             color: #e5f4ff;
@@ -633,10 +498,12 @@
             margin-bottom: 4px;
             white-space: pre-line;
         }
+
         .update-toast-speed {
             font-size: 12px;
             color: #8bb6db;
         }
+
         .update-toast-progress { margin-top: 8px; }
 
         .update-toast-status {
@@ -645,17 +512,25 @@
             font-size: 13px;
             color: #8bb6db;
         }
+
         .update-toast-status.error { color: #ff6b6b; }
+
+        .loading { color: #7a8a9a; font-size: 14px; }
+        .error {
+            color: #ff6b6b;
+            padding: 20px;
+            background: rgba(255, 107, 107, 0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        #game-path-input { display: none; }
     </style>
 </head>
 <body>
 <div class="sidebar">
-    <!-- снежинки в сайдбаре -->
-    <div class="snowflake" style="left: 8%; top: -8%; animation-duration: 16s; animation-delay: 0s;">✻</div>
-    <div class="snowflake" style="left: 30%; top: -12%; animation-duration: 18s; animation-delay: 2s;">✻</div>
-    <div class="snowflake" style="left: 55%; top: -15%; animation-duration: 19s; animation-delay: 4s;">✻</div>
-    <div class="snowflake" style="left: 78%; top: -10%; animation-duration: 21s; animation-delay: 6s;">✻</div>
-    <div class="snowflake" style="left: 92%; top: -6%;  animation-duration: 23s; animation-delay: 8s;">✻</div>
+    <div class="snowflake" style="left: 15%; top: -8%; animation-duration: 18s; animation-delay: 0s;">✻</div>
+    <div class="snowflake" style="left: 70%; top: -12%; animation-duration: 22s; animation-delay: 3s;">✻</div>
 
     <div class="logo">
         <i class="fas fa-cube"></i>
@@ -690,12 +565,9 @@
 <div class="content">
     <!-- снежинки в контенте -->
     <div class="snowflake" style="left: 10%; top: -10%; animation-duration: 20s; animation-delay: 0s;">✻</div>
-    <div class="snowflake" style="left: 25%; top: -15%; animation-duration: 22s; animation-delay: 3s;">✻</div>
-    <div class="snowflake" style="left: 40%; top: -18%; animation-duration: 24s; animation-delay: 1s;">✻</div>
-    <div class="snowflake" style="left: 55%; top: -12%; animation-duration: 26s; animation-delay: 4s;">✻</div>
-    <div class="snowflake" style="left: 70%; top: -16%; animation-duration: 21s; animation-delay: 2s;">✻</div>
-    <div class="snowflake" style="left: 85%; top: -14%; animation-duration: 25s; animation-delay: 5s;">✻</div>
-    <div class="snowflake" style="left: 95%; top: -9%;  animation-duration: 23s; animation-delay: 7s;">✻</div>
+    <div class="snowflake" style="left: 35%; top: -15%; animation-duration: 23s; animation-delay: 2s;">✻</div>
+    <div class="snowflake" style="left: 60%; top: -18%; animation-duration: 25s; animation-delay: 4s;">✻</div>
+    <div class="snowflake" style="left: 85%; top: -12%; animation-duration: 21s; animation-delay: 6s;">✻</div>
 
     <!-- таб Моды -->
     <div id="tab-mods" class="tab-content active">
@@ -757,7 +629,7 @@
         </div>
     </div>
 
-    <!-- ПРИКРЕПЛЕННОЕ окно обновления -->
+    <!-- прикреплённое окно обновления -->
     <div id="updateToast">
         <div class="update-toast-header">
             <div class="update-toast-title">
@@ -784,7 +656,6 @@
 
 <input type="text" id="game-path-input" readonly>
 
-<!-- Модалка установки модов -->
 <div id="installModal" class="modal-overlay">
     <div class="modal-dialog">
         <div class="modal-header">
@@ -838,14 +709,15 @@
         });
     }
 
-    // Модалка установки модов
     function showModal() {
         document.getElementById("installModal").classList.add("show");
         resetModal();
     }
+
     function closeModal() {
         document.getElementById("installModal").classList.remove("show");
     }
+
     function resetModal() {
         document.getElementById("modalMessage").textContent = "Подготовка к установке мода...";
         document.getElementById("progressBar").style.width = "0%";
@@ -853,11 +725,13 @@
         document.getElementById("statusMessage").classList.remove("show", "success", "error");
         document.getElementById("modalFooter").classList.remove("show");
     }
+
     function updateProgress(percent, message) {
         document.getElementById("progressBar").style.width = percent + "%";
         document.getElementById("progressText").textContent = percent + "%";
         if (message) document.getElementById("modalMessage").textContent = message;
     }
+
     function showSuccess(message) {
         const statusMsg = document.getElementById("statusMessage");
         statusMsg.classList.add("show", "success");
@@ -866,6 +740,7 @@
         document.getElementById("modalFooter").classList.add("show");
         statusMsg.querySelector("i").className = "fas fa-check-circle";
     }
+
     function showError(message) {
         const statusMsg = document.getElementById("statusMessage");
         statusMsg.classList.add("show", "error");
@@ -875,7 +750,6 @@
         statusMsg.querySelector("i").className = "fas fa-exclamation-circle";
     }
 
-    // Окно обновления (прикреплено к content)
     function showUpdateToast() {
         const toast = document.getElementById("updateToast");
         document.getElementById("updateProgressBar").style.width = "0%";
@@ -887,21 +761,25 @@
         st.className = "update-toast-status";
         toast.classList.add("show");
     }
+
     function closeUpdateToast() {
         document.getElementById("updateToast").classList.remove("show");
     }
+
     function updateUpdateProgress(percent, message, speedText) {
         document.getElementById("updateProgressBar").style.width = percent + "%";
         document.getElementById("updateProgressText").textContent = percent + "%";
         if (message) document.getElementById("updateToastMessage").textContent = message;
         if (typeof speedText === "string") document.getElementById("updateToastSpeed").textContent = speedText;
     }
+
     function showUpdateSuccess(message) {
         const st = document.getElementById("updateToastStatus");
         st.textContent = message || "Тестовое обновление завершено. Лаунчер будет перезапущен.";
         st.className = "update-toast-status";
         st.style.display = "block";
     }
+
     function showUpdateError(message) {
         const st = document.getElementById("updateToastStatus");
         st.textContent = message || "Ошибка при тестовом обновлении.";
@@ -909,7 +787,6 @@
         st.style.display = "block";
     }
 
-    // Загрузка модов
     function refreshMods() {
         if (isRefreshing) return;
         isRefreshing = true;
@@ -919,6 +796,7 @@
         console.log("REFRESH_MODS");
         loadMods();
     }
+
     function loadMods() {
         fetch(MODS_JSON + "?t=" + Date.now())
             .then(res => {
@@ -944,6 +822,7 @@
                 btn.disabled = false;
             });
     }
+
     function renderMods(mods) {
         const grid = document.getElementById("grid");
         grid.innerHTML = "";
