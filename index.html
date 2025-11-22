@@ -11,113 +11,154 @@
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
 
     <style>
-        body {
-            background: #0f1419;
-            color: #ffffff;
-            font-family: "Roboto", sans-serif;
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            user-select: none;
+        :root {
+            --bg-main: #020304;
+            --bg-panel: #090b0f;
+            --bg-panel-soft: #0b0e13;
+            --border-soft: rgba(255, 255, 255, 0.08);
+            --accent: #8bb6db; /* для иконки */
+            --text-main: #f5f5f5;
+            --text-muted: #9ca3af;
         }
 
-        /* Снежинки */
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            font-family: "Roboto", sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.16) 0, transparent 45%),
+                radial-gradient(circle at 100% 100%, rgba(0, 0, 0, 0.8) 0, transparent 65%),
+                linear-gradient(135deg, #020304 0%, #050608 50%, #020304 100%);
+            overflow: hidden;
+            user-select: none;
+            position: relative;
+        }
+
+        /* Карбоновая фактура поверх фона */
+
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(45deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0.03) 75%, transparent 75%, transparent);
+            background-size: 10px 10px;
+            mix-blend-mode: soft-light;
+            opacity: 0.55;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Лёгкий «иней» по углам */
+
+        body::after {
+            content: "";
+            position: absolute;
+            right: -80px;
+            bottom: -80px;
+            width: 320px;
+            height: 260px;
+            background:
+                radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.18) 0, transparent 60%),
+                radial-gradient(circle at 0 0, rgba(0, 0, 0, 0.6) 0, transparent 60%);
+            opacity: 0.9;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Снежинки — теперь белые/серые, без синего */
 
         .snowflake {
             position: absolute;
-            color: rgba(210, 230, 255, 0.95);
-            font-size: 18px;
+            color: rgba(249, 250, 251, 0.9);
+            font-size: 13px;
             text-shadow:
-                0 0 6px rgba(15, 23, 42, 0.9),
-                0 0 12px rgba(148, 197, 255, 0.95);
+                0 0 4px rgba(0, 0, 0, 0.9),
+                0 0 7px rgba(255, 255, 255, 0.6);
             animation: snowfall linear infinite;
             pointer-events: none;
             z-index: 0;
         }
 
         @keyframes snowfall {
-            0% {
-                transform: translateY(-10px) translateX(0) scale(0.8);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) translateX(25px) scale(1.05);
-                opacity: 0;
-            }
+            0%   { transform: translateY(-14px) translateX(0) scale(0.9); opacity: 0; }
+            12%  { opacity: 1; }
+            88%  { opacity: 1; }
+            100% { transform: translateY(100vh) translateX(20px) scale(1.05); opacity: 0; }
         }
 
         .sidebar {
             width: 260px;
-            background: linear-gradient(180deg, #151a21 0%, #0f1419 100%);
-            padding: 25px;
+            background:
+                linear-gradient(180deg, #050506 0%, #050608 40%, #020304 100%);
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid rgba(139, 182, 219, 0.15);
-            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.4);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                2px 0 18px rgba(0, 0, 0, 0.9),
+                0 0 0 1px rgba(0, 0, 0, 0.9);
             position: relative;
             z-index: 1;
         }
 
         .logo {
             font-family: "Rajdhani", sans-serif;
-            font-size: 28px;
-            color: #e8f4fa;
-            margin-bottom: 30px;
-            font-weight: bold;
+            font-size: 26px;
+            color: var(--text-main);
+            margin-bottom: 28px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 10px;
-            text-shadow: 0 0 20px rgba(139, 182, 219, 0.4);
-            position: relative;
-            z-index: 1;
+            letter-spacing: 0.06em;
         }
 
         .logo i {
-            color: #8bb6db;
-            filter: drop-shadow(0 0 10px rgba(139, 182, 219, 0.5));
+            color: var(--accent); /* цветная иконка, как просил */
+            filter: drop-shadow(0 0 10px rgba(139, 182, 219, 0.95));
         }
 
         .nav-tabs {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
             margin-bottom: auto;
             position: relative;
             z-index: 1;
         }
 
         .nav-tab {
-            padding: 12px 15px;
+            padding: 11px 14px;
             background: transparent;
             border: none;
-            color: #a0b0c0;
-            font-size: 15px;
+            color: #9ca3af;
+            font-size: 14px;
             cursor: pointer;
             text-align: left;
-            border-radius: 8px;
-            transition: all 0.3s;
+            border-radius: 9px;
+            transition: all 0.16s ease-out;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
         .nav-tab:hover {
-            background: rgba(139, 182, 219, 0.08);
-            color: #e8f4fa;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-main);
         }
 
         .nav-tab.active {
-            background: rgba(139, 182, 219, 0.12);
-            color: #e8f4fa;
+            background:
+                linear-gradient(120deg, rgba(255, 255, 255, 0.15) 0, rgba(0, 0, 0, 0.9) 40%, rgba(0, 0, 0, 0.9) 100%);
+            color: var(--text-main);
             font-weight: 500;
-            border-left: 2px solid #8bb6db;
+            border-left: 2px solid rgba(255, 255, 255, 0.7);
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.9),
+                0 10px 22px rgba(0, 0, 0, 0.9);
         }
 
         .nav-tab i {
@@ -127,11 +168,11 @@
 
         .status-box {
             margin-top: auto;
-            padding: 20px;
-            background: rgba(21, 26, 33, 0.5);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            border: 1px solid rgba(139, 182, 219, 0.15);
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+            border-radius: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             position: relative;
             z-index: 1;
         }
@@ -139,51 +180,53 @@
         .status-line {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .status-pulse {
-            width: 10px;
-            height: 10px;
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
-            background: #4a9eff;
-            box-shadow: 0 0 15px rgba(74, 158, 255, 0.8);
+            background: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
             animation: pulse-glow 2s ease-in-out infinite;
         }
 
         @keyframes pulse-glow {
             0%, 100% { transform: scale(1); opacity: 1; }
-            50%      { transform: scale(1.2); opacity: 0.7; }
+            50%      { transform: scale(1.4); opacity: 0.7; }
         }
 
         .status-text {
-            font-size: 13px;
-            color: #a0b0c0;
+            font-size: 12px;
+            color: #e5e7eb;
             font-weight: 500;
         }
 
-        .status-text.connected { color: #8bb6db; }
-        .status-text.disconnected { color: #ff6b6b; }
+        .status-text.connected { color: #e5e7eb; }
+        .status-text.disconnected { color: #fca5a5; }
 
         .status-pulse.disconnected {
-            background: #ff6b6b;
-            box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+            background: #f97373;
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
             animation: none;
         }
 
         .content {
             flex: 1;
-            padding: 30px;
+            padding: 26px 30px 26px 30px;
             overflow-y: auto;
-            background: linear-gradient(135deg, #0f1419 0%, #151a21 100%);
-            position: relative; /* нужно для прикреплённого окна обновления */
+            background:
+                radial-gradient(circle at 50% 0, rgba(15, 15, 15, 0.85) 0, transparent 55%),
+                linear-gradient(135deg, #050608 0%, #020304 60%, #000000 100%);
+            position: relative;
             z-index: 1;
         }
 
         .content::-webkit-scrollbar { width: 8px; }
-        .content::-webkit-scrollbar-track { background: rgba(139, 182, 219, 0.05); }
+        .content::-webkit-scrollbar-track { background: rgba(15, 15, 15, 0.85); }
         .content::-webkit-scrollbar-thumb {
-            background: rgba(139, 182, 219, 0.2);
+            background: rgba(255, 255, 255, 0.26);
             border-radius: 4px;
         }
 
@@ -195,11 +238,11 @@
 
         .tab-content.active {
             display: block;
-            animation: fadeIn 0.3s;
+            animation: fadeIn 0.2s ease-out;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(6px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
@@ -207,48 +250,47 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 25px;
+            margin-bottom: 22px;
         }
 
         .content-header h2 {
             font-family: "Rajdhani", sans-serif;
             margin: 0;
-            color: #e8f4fa;
-            font-size: 32px;
+            color: var(--text-main);
+            font-size: 30px;
             font-weight: 700;
-            letter-spacing: 1px;
-            text-shadow: 0 0 20px rgba(139, 182, 219, 0.3);
+            letter-spacing: 0.08em;
         }
 
         .refresh-btn {
-            padding: 10px 20px;
-            background: rgba(139, 182, 219, 0.08);
-            border: 1px solid rgba(139, 182, 219, 0.15);
-            border-radius: 8px;
-            color: #a0b0c0;
-            font-size: 14px;
+            padding: 9px 18px;
+            background:
+                linear-gradient(120deg, rgba(255, 255, 255, 0.18) 0, rgba(24, 24, 27, 0.96) 40%, rgba(0, 0, 0, 0.98) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 999px;
+            color: #e5e7eb;
+            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s;
-            font-family: "Roboto", sans-serif;
+            transition: all 0.18s ease-out;
             font-weight: 500;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.9);
         }
 
         .refresh-btn:hover {
-            background: rgba(139, 182, 219, 0.12);
-            border-color: rgba(139, 182, 219, 0.25);
-            color: #e8f4fa;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.95);
+            transform: translateY(-1px);
         }
 
         .refresh-btn i {
-            font-size: 14px;
+            font-size: 13px;
             transition: transform 0.6s;
         }
 
         .refresh-btn.loading i {
-            animation: spin 1s linear infinite;
+            animation: spin 0.9s linear infinite;
         }
 
         @keyframes spin {
@@ -259,45 +301,59 @@
         .mod-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            gap: 18px;
         }
 
+        /* Карточки модов — чёрно‑белый карбон */
+
         .mod-card {
-            background: rgba(21, 26, 33, 0.6);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
+            position: relative;
+            background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.08) 0, #050608 60%);
+            border-radius: 14px;
             overflow: hidden;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(139, 182, 219, 0.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.18s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.95);
+        }
+
+        .mod-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.05) 75%, transparent 75%, transparent);
+            background-size: 8px 8px;
+            mix-blend-mode: soft-light;
+            opacity: 0.55;
+            pointer-events: none;
         }
 
         .mod-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(139, 182, 219, 0.3);
-            box-shadow: 0 10px 30px rgba(139, 182, 219, 0.15);
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.38);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.98);
         }
 
         .mod-img {
             width: 100%;
-            height: 170px;
+            height: 168px;
             object-fit: cover;
-            background: linear-gradient(135deg, #1a2028 0%, #0f1419 100%);
-            border-bottom: 1px solid rgba(139, 182, 219, 0.1);
+            background: linear-gradient(135deg, #111827 0%, #020617 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.16);
         }
 
-        .mod-body { padding: 20px; }
+        .mod-body { padding: 17px 18px 15px 18px; position: relative; z-index: 1; }
 
         .mod-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #e8f4fa;
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-main);
         }
 
         .mod-author {
             font-size: 12px;
-            color: #7a8a9a;
+            color: #d1d5db;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -308,67 +364,99 @@
 
         .mod-desc {
             font-size: 13px;
-            color: #a0b0c0;
+            color: #d4d4d4;
             height: 36px;
             overflow: hidden;
-            margin-bottom: 15px;
+            margin-bottom: 14px;
             line-height: 1.4;
         }
 
+        /* Кнопка — чёрно‑белая «ледяная» таблетка */
+
         .btn {
+            position: relative;
             width: 100%;
-            padding: 12px;
+            padding: 11px;
             border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, rgba(139, 182, 219, 0.15) 0%, rgba(139, 182, 219, 0.08) 100%);
-            color: #8bb6db;
-            font-weight: bold;
+            border-radius: 999px;
+            color: #020617;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(139, 182, 219, 0.2);
+            font-size: 13px;
+            background:
+                linear-gradient(135deg, #f9fafb 0%, #e5e7eb 35%, #d4d4d4 70%, #9ca3af 100%);
+            border: 1px solid #f3f4f6;
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.9),
+                0 10px 24px rgba(0, 0, 0, 0.85);
+            overflow: hidden;
+            transition: all 0.18s ease-out;
+        }
+
+        .btn::before {
+            content: "";
+            position: absolute;
+            inset: -20%;
+            background:
+                radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.9) 0, transparent 50%),
+                radial-gradient(circle at 100% 0, rgba(209, 213, 219, 0.9) 0, transparent 45%);
+            opacity: 0.0;
+            mix-blend-mode: screen;
+            transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+        }
+
+        .btn:hover::before {
+            opacity: 0.7;
+            transform: translateY(-4px);
         }
 
         .btn:hover {
-            background: linear-gradient(135deg, rgba(139, 182, 219, 0.25) 0%, rgba(139, 182, 219, 0.15) 100%);
-            border-color: rgba(139, 182, 219, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(139, 182, 219, 0.2);
+            transform: translateY(-1px);
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.9),
+                0 16px 28px rgba(0, 0, 0, 0.95);
         }
 
-        .btn:active { transform: scale(0.98); }
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.9);
+        }
 
-        .settings-section {
-            background: rgba(21, 26, 33, 0.75);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
+        .settings-section,
+        .info-section {
+            background: var(--bg-panel-soft);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
             padding: 22px 24px 20px;
             margin-bottom: 20px;
-            border: 1px solid rgba(139, 182, 219, 0.16);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 22px 44px rgba(0, 0, 0, 0.95);
         }
 
-        .settings-section h3 {
+        .settings-section h3,
+        .info-title {
             font-family: "Rajdhani", sans-serif;
             font-size: 22px;
-            margin-bottom: 18px;
-            color: #e8f4fa;
+            margin: 0 0 14px 0;
+            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .settings-section h3 i { color: #8bb6db; }
+        .settings-section h3 i,
+        .info-title i { color: #e5e7eb; }
 
         .setting-item { margin-bottom: 10px; }
 
         .setting-item label {
             display: block;
-            margin-bottom: 8px;
-            color: #c1cfdd;
+            margin-bottom: 7px;
+            color: #d4d4d4;
             font-size: 14px;
         }
 
@@ -381,74 +469,57 @@
             flex: 1 1 0;
             border-radius: 10px;
             padding: 12px 14px;
-            border: 1px solid rgba(139, 182, 219, 0.22);
-            background: rgba(13, 17, 23, 0.9);
-            color: #a0b0c0;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: #020617;
+            color: #e5e7eb;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            transition: all 0.2s ease;
+            transition: all 0.16s ease-out;
         }
 
         .install-method-pill:hover {
-            border-color: rgba(139, 182, 219, 0.45);
-            background: rgba(18, 24, 33, 0.96);
+            border-color: rgba(255, 255, 255, 0.38);
+            background: #020617;
         }
 
         .install-method-pill.active {
-            border-color: #8bb6db;
-            background: linear-gradient(135deg, rgba(139, 182, 219, 0.18) 0%, rgba(20, 26, 35, 0.98) 100%);
-            box-shadow: 0 0 0 1px rgba(139, 182, 219, 0.5), 0 8px 22px rgba(0, 0, 0, 0.7);
+            border-color: rgba(255, 255, 255, 0.6);
+            background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.16) 0, #020617 60%);
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.9), 0 16px 28px rgba(0, 0, 0, 0.9);
         }
 
         .install-method-title {
             font-size: 14px;
-            color: #e8f4fa;
+            color: var(--text-main);
             font-weight: 600;
         }
 
         .install-method-desc {
             font-size: 12px;
-            color: #c1cfdd;
+            color: #d4d4d4;
         }
 
         .install-method-note {
             margin-top: 10px;
             font-size: 13px;
-            color: #a0b0c0;
-        }
-
-        .info-section {
-            background: rgba(21, 26, 33, 0.86);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 22px 24px 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(139, 182, 219, 0.16);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
-        }
-
-        .info-title {
-            font-family: "Rajdhani", sans-serif;
-            font-size: 22px;
-            margin: 0 0 10px 0;
-            color: #e8f4fa;
+            color: #9ca3af;
         }
 
         .info-text {
-            margin: 0 0 16px 0;
+            margin: 0 0 14px 0;
             font-size: 14px;
-            color: #c1cfdd;
+            color: #e5e7eb;
         }
 
-        .loading { color: #7a8a9a; font-size: 14px; }
+        .loading { color: #9ca3af; font-size: 14px; }
         .error {
-            color: #ff6b6b;
+            color: #fecaca;
             padding: 20px;
-            background: rgba(255, 107, 107, 0.08);
+            background: rgba(127, 29, 29, 0.5);
             border-radius: 8px;
-            border: 1px solid rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.7);
         }
 
         /* Модалка установки модов */
@@ -459,16 +530,15 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background:
+                radial-gradient(circle at 50% 0, rgba(15, 15, 15, 0.96), rgba(0, 0, 0, 0.98));
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.22s ease-out;
         }
 
         .modal-overlay.show {
@@ -477,92 +547,92 @@
         }
 
         .modal-dialog {
-            background: rgba(21, 26, 33, 0.95);
+            background: #050608;
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(139, 182, 219, 0.2);
-            border-radius: 15px;
-            width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            width: 440px;
             max-width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            transform: scale(0.9) translateY(20px);
-            transition: transform 0.3s ease;
+            box-shadow: 0 26px 60px rgba(0, 0, 0, 0.95);
+            transform: translateY(10px);
+            transition: transform 0.2s ease-out;
         }
 
         .modal-overlay.show .modal-dialog {
-            transform: scale(1) translateY(0);
+            transform: translateY(0);
         }
 
         .modal-header {
-            padding: 22px 25px;
-            border-bottom: 1px solid rgba(139, 182, 219, 0.15);
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .modal-header i {
-            font-size: 22px;
-            color: #8bb6db;
+            font-size: 20px;
+            color: #f9fafb;
         }
 
         .modal-title {
             font-family: "Rajdhani", sans-serif;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 600;
-            color: #e8f4fa;
+            color: var(--text-main);
             flex: 1;
         }
 
         .modal-close {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             background: transparent;
             border: none;
-            color: #7a8a9a;
-            font-size: 18px;
+            color: #e5e7eb;
+            font-size: 16px;
             cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
+            border-radius: 7px;
+            transition: all 0.16s;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .modal-close:hover {
-            background: rgba(139, 182, 219, 0.1);
-            color: #e8f4fa;
+            background: rgba(255, 255, 255, 0.14);
+            color: var(--text-main);
         }
 
-        .modal-body { padding: 25px; }
+        .modal-body { padding: 20px 22px 18px 22px; }
 
         .modal-message {
-            color: #a0b0c0;
-            font-size: 15px;
-            margin-bottom: 20px;
-            line-height: 1.6;
+            color: #e5e7eb;
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.5;
         }
 
         .progress-container {
             width: 100%;
-            height: 10px;
-            background: rgba(15, 20, 25, 0.6);
-            border-radius: 10px;
+            height: 9px;
+            background: rgba(0, 0, 0, 0.96);
+            border-radius: 999px;
             overflow: hidden;
             position: relative;
-            margin-top: 15px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(139, 182, 219, 0.1);
+            margin-top: 6px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(55, 65, 81, 0.9);
         }
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #4a9eff 0%, #8bb6db 50%, #4a9eff 100%);
+            background: linear-gradient(90deg, #f9fafb 0%, #9ca3af 40%, #f9fafb 100%);
             background-size: 200% 100%;
-            border-radius: 10px;
+            border-radius: 999px;
             width: 0%;
-            transition: width 0.4s ease;
-            animation: shimmer 1.8s infinite;
-            box-shadow: 0 0 15px rgba(74, 158, 255, 0.5);
+            transition: width 0.3s ease-out;
+            animation: shimmer 1.4s infinite;
+            box-shadow: 0 0 12px rgba(249, 250, 251, 0.6);
         }
 
         @keyframes shimmer {
@@ -572,46 +642,41 @@
 
         .progress-text {
             text-align: center;
-            color: #8bb6db;
-            font-size: 13px;
-            margin-top: 12px;
+            color: #e5e7eb;
+            font-size: 12px;
+            margin-top: 10px;
             font-weight: 500;
         }
 
         .status-message {
             display: none;
             align-items: center;
-            gap: 12px;
-            padding: 16px;
-            border-radius: 10px;
-            margin-top: 18px;
-            font-size: 14px;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to   { opacity: 1; transform: translateY(0); }
+            gap: 10px;
+            padding: 12px 13px;
+            border-radius: 11px;
+            margin-top: 14px;
+            font-size: 13px;
         }
 
         .status-message.show { display: flex; }
+
         .status-message.success {
-            background: rgba(74, 158, 255, 0.15);
-            border: 1px solid rgba(74, 158, 255, 0.3);
-            color: #4a9eff;
+            background: rgba(22, 163, 74, 0.22);
+            border: 1px solid rgba(34, 197, 94, 0.7);
+            color: #bbf7d0;
         }
 
         .status-message.error {
-            background: rgba(255, 107, 107, 0.15);
-            border: 1px solid rgba(255, 107, 107, 0.3);
-            color: #ff6b6b;
+            background: rgba(127, 29, 29, 0.7);
+            border: 1px solid rgba(248, 113, 113, 0.8);
+            color: #fecaca;
         }
 
-        .status-message i { font-size: 20px; }
+        .status-message i { font-size: 18px; }
 
         .modal-footer {
-            padding: 18px 25px;
-            border-top: 1px solid rgba(139, 182, 219, 0.15);
+            padding: 14px 22px 16px 22px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: none;
             justify-content: flex-end;
         }
@@ -619,47 +684,47 @@
         .modal-footer.show { display: flex; }
 
         .modal-btn {
-            padding: 11px 28px;
-            background: linear-gradient(135deg, rgba(139, 182, 219, 0.15) 0%, rgba(139, 182, 219, 0.08) 100%);
-            border: 1px solid rgba(139, 182, 219, 0.2);
-            color: #8bb6db;
-            border-radius: 8px;
+            padding: 8px 22px;
+            background: linear-gradient(135deg, #f9fafb 0%, #d4d4d4 100%);
+            border: 1px solid #e5e7eb;
+            color: #020617;
+            border-radius: 999px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s;
-            font-size: 14px;
+            transition: all 0.16s;
+            font-size: 13px;
         }
 
         .modal-btn:hover {
-            background: linear-gradient(135deg, rgba(139, 182, 219, 0.25) 0%, rgba(139, 182, 219, 0.15) 100%);
-            border-color: rgba(139, 182, 219, 0.4);
-            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.9);
         }
 
-        /* Прикреплённая панель обновления внизу справа */
+        /* Окно обновления лаунчера */
 
         #updateToast {
             position: absolute;
             right: 32px;
-            bottom: 32px;
+            bottom: 30px;
             width: 420px;
             max-width: 40%;
-            background: rgba(21, 26, 33, 0.97);
-            border-radius: 16px;
-            border: 1px solid rgba(139, 182, 219, 0.4);
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85);
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.2) 0, #000000 45%, #000000 100%);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.42);
+            box-shadow: 0 22px 48px rgba(0, 0, 0, 0.98);
             padding: 18px 20px 16px;
             display: none;
             z-index: 50;
+            overflow: hidden;
         }
 
         #updateToast.show {
             display: block;
-            animation: fadeInUpRight 0.25s ease-out;
+            animation: fadeInUpRight 0.22s ease-out;
         }
 
         @keyframes fadeInUpRight {
-            from { opacity: 0; transform: translate(10px, 10px); }
+            from { opacity: 0; transform: translate(8px, 8px); }
             to   { opacity: 1; transform: translate(0, 0); }
         }
 
@@ -667,27 +732,29 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .update-toast-title {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 9px;
             font-family: "Rajdhani", sans-serif;
             font-size: 18px;
-            color: #e8f4fa;
+            color: var(--text-main);
         }
 
-        .update-toast-title i { color: #8bb6db; }
+        .update-toast-title i {
+            color: #e5e7eb;
+        }
 
         .update-toast-close {
             background: transparent;
             border: none;
-            color: #7a8a9a;
-            font-size: 16px;
+            color: #e5e7eb;
+            font-size: 15px;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 7px;
             width: 26px;
             height: 26px;
             display: flex;
@@ -696,32 +763,32 @@
         }
 
         .update-toast-close:hover {
-            background: rgba(148, 197, 255, 0.08);
-            color: #e5f4ff;
+            background: rgba(255, 255, 255, 0.14);
+            color: var(--text-main);
         }
 
         .update-toast-message {
             font-size: 13px;
-            color: #c1cfdd;
-            margin-bottom: 4px;
+            color: #e5e7eb;
+            margin-bottom: 3px;
             white-space: pre-line;
         }
 
         .update-toast-speed {
             font-size: 12px;
-            color: #8bb6db;
+            color: #d4d4d4;
         }
 
         .update-toast-progress { margin-top: 8px; }
 
         .update-toast-status {
             display: none;
-            margin-top: 10px;
+            margin-top: 9px;
             font-size: 13px;
-            color: #8bb6db;
+            color: #e5e7eb;
         }
 
-        .update-toast-status.error { color: #ff6b6b; }
+        .update-toast-status.error { color: #fecaca; }
 
         #game-path-input { display: none; }
     </style>
@@ -774,7 +841,7 @@
             <h2>ДОСТУПНЫЕ МОДЫ</h2>
             <button class="refresh-btn" onclick="refreshMods()" id="refreshBtn">
                 <i class="fas fa-sync-alt"></i>
-                Обновить
+                Обновить список
             </button>
         </div>
         <div id="grid" class="mod-grid">
@@ -784,7 +851,7 @@
 
     <!-- Настройки -->
     <div id="tab-settings" class="tab-content">
-        <h2 style="margin-bottom: 25px;">НАСТРОЙКИ</h2>
+        <h2 style="margin-bottom: 22px; font-family:'Rajdhani',sans-serif; letter-spacing:0.08em;">НАСТРОЙКИ</h2>
 
         <div class="settings-section">
             <h3><i class="fas fa-cogs"></i> Метод установки модов</h3>
@@ -809,15 +876,15 @@
 
     <!-- Информация -->
     <div id="tab-info" class="tab-content">
-        <h2 style="margin-bottom: 25px;">ИНФОРМАЦИЯ</h2>
+        <h2 style="margin-bottom: 22px; font-family:'Rajdhani',sans-serif; letter-spacing:0.08em;">ИНФОРМАЦИЯ</h2>
 
         <div class="info-section">
             <h3 class="info-title">О программе</h3>
             <p class="info-text">
-                ASSTRALLITY LOADER — Универсальный установщик модов с поддержкой бэкапа и контроля актуальной версии игры.
+                ASSTRALLITY LOADER — универсальный установщик модов для World of Tanks Blitz с поддержкой бэкапа и контроля актуальной версии игры.
             </p>
 
-            <h3 class="info-title" style="margin-top: 10px;">Тест обновления лаунчера</h3>
+            <h3 class="info-title" style="margin-top: 6px;">Тест обновления лаунчера</h3>
             <p class="info-text">
                 Эта кнопка имитирует скачивание новой версии лаунчера и его перезапуск без реальной замены файла.
             </p>
@@ -828,7 +895,7 @@
         </div>
     </div>
 
-    <!-- прикреплённое окно обновления -->
+    <!-- окно обновления -->
     <div id="updateToast">
         <div class="update-toast-header">
             <div class="update-toast-title">
@@ -909,8 +976,6 @@
         });
     }
 
-    // Модалка установки модов
-
     function showModal() {
         document.getElementById("installModal").classList.add("show");
         resetModal();
@@ -952,8 +1017,6 @@
         statusMsg.querySelector("i").className = "fas fa-exclamation-circle";
     }
 
-    // Окно обновления лаунчера
-
     function showUpdateToast() {
         const toast = document.getElementById("updateToast");
         document.getElementById("updateProgressBar").style.width = "0%";
@@ -969,8 +1032,6 @@
     function closeUpdateToast() {
         document.getElementById("updateToast").classList.remove("show");
     }
-
-    // percent: 0..100, message: текст, speedText: "X МБ/с"
 
     function updateUpdateProgress(percent, message, speedText) {
         document.getElementById("updateProgressBar").style.width = percent + "%";
@@ -992,8 +1053,6 @@
         st.className = "update-toast-status error";
         st.style.display = "block";
     }
-
-    // Загрузка модов
 
     function refreshMods() {
         if (isRefreshing) return;
@@ -1048,13 +1107,13 @@
 
             const previewUrl = imageUrl
                 ? (imageUrl.startsWith("http") ? imageUrl : REPO_ROOT + imageUrl)
-                : "https://via.placeholder.com/300x170/1a2028/8bb6db?text=No+Preview";
+                : "https://via.placeholder.com/300x170/111827/e5e7eb?text=No+Preview";
 
             const card = document.createElement("div");
             card.className = "mod-card";
             card.innerHTML = `
                 <img src="${previewUrl}" class="mod-img" alt="${mod.name || ""}"
-                     onerror="this.src='https://via.placeholder.com/300x170/1a2028/8bb6db?text=No+Preview'">
+                     onerror="this.src='https://via.placeholder.com/300x170/111827/e5e7eb?text=No+Preview'">
                 <div class="mod-body">
                     <div class="mod-title">${mod.name || "Без названия"}</div>
                     <div class="mod-author">
