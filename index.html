@@ -14,32 +14,30 @@
             box-sizing: border-box;
         }
 
-        /* Кастомный скроллбар для всей страницы */
+        /* Минималистичный кастомный скроллбар */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(20, 30, 45, 0.5);
-            border-radius: 10px;
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, rgba(111, 181, 255, 0.6) 0%, rgba(80, 140, 200, 0.7) 100%);
+            background: rgba(111, 181, 255, 0.4);
             border-radius: 10px;
-            border: 2px solid rgba(20, 30, 45, 0.5);
-            transition: all 0.3s ease;
+            transition: background 0.3s ease;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, rgba(130, 195, 255, 0.8) 0%, rgba(95, 160, 220, 0.9) 100%);
-            box-shadow: 0 0 12px rgba(111, 181, 255, 0.5);
+            background: rgba(111, 181, 255, 0.7);
         }
 
         /* Для Firefox */
         * {
             scrollbar-width: thin;
-            scrollbar-color: rgba(111, 181, 255, 0.6) rgba(20, 30, 45, 0.5);
+            scrollbar-color: rgba(111, 181, 255, 0.4) transparent;
         }
 
         body {
@@ -305,7 +303,6 @@
             letter-spacing: 0.25px;
         }
 
-        /* Material Design 3 Radio Buttons */
         .radio-group {
             display: flex;
             gap: 8px;
@@ -581,19 +578,32 @@
                 return;
             }
 
-            container.innerHTML = modsData.map(mod => `
+            container.innerHTML = modsData.map((mod, index) => `
                 <div class="mod-card">
                     ${mod.image 
-                        ? `<img src="${mod.image}" alt="${mod.name}" class="mod-image" onerror="this.outerHTML='<div class=\\'mod-image-placeholder\\'>📦</div>'">` 
+                        ? `<img src="${mod.image}" alt="${mod.name || 'Мод'}" class="mod-image" onerror="this.outerHTML='<div class=\\'mod-image-placeholder\\'>📦</div>'">` 
                         : '<div class="mod-image-placeholder">📦</div>'
                     }
                     <div class="mod-content">
-                        <h3>${mod.name}</h3>
-                        <p>${mod.description}</p>
-                        <button onclick="install('${mod.url}', '${mod.name}')">Установить</button>
+                        <h3>${mod.name || 'Без названия'}</h3>
+                        <p>${mod.description || 'Описание отсутствует'}</p>
+                        <button class="install-btn" data-mod-index="${index}">Установить</button>
                     </div>
                 </div>
             `).join('');
+
+            // Добавляем обработчики событий для всех кнопок установки
+            document.querySelectorAll('.install-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modIndex = parseInt(this.getAttribute('data-mod-index'));
+                    const mod = modsData[modIndex];
+                    if (mod && mod.url) {
+                        install(mod.url, mod.name);
+                    } else {
+                        console.error('Mod data is incomplete:', mod);
+                    }
+                });
+            });
         }
 
         function switchTab(tabName, event) {
