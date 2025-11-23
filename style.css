@@ -1,215 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
+
 :root {
-    /* Базовые тёмные цвета (в духе Material Dark) */
-    --md-sys-color-surface: #121212;
-    --md-sys-color-surface-variant: #1e1e1e;
-    --md-sys-color-on-surface: #ffffff;
-    --md-sys-color-outline: #3c3c3c;
-
-    /* Акцент (можешь поменять под бренд) */
-    --md-sys-color-primary: #8ab4ff;
-    --md-sys-color-on-primary: #000000;
-
-    /* Для табов и кнопок */
-    --md-sys-color-secondary: #03dac6;
-    --md-sys-color-on-secondary: #000000;
-
-    --md-radius-large: 24px;
-    --md-radius-medium: 16px;
-    --md-radius-small: 12px;
-
-    --md-padding: 16px;
-    --md-padding-lg: 24px;
-
-    --md-elevation-1: #1e1e1e;
-    --md-elevation-2: #232323;
+    --bg-dark: #09090b; /* Почти черный */
+    --sidebar-bg: rgba(15, 15, 15, 0.85);
+    --text-main: #ffffff;
+    --text-dim: #71717a; /* Цинк серый */
+    --accent: #ffffff;
+    --border-color: #27272a;
 }
 
-/* Сбросы */
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-html, body {
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+    /* Мягкая подсветка в углу */
+    background: radial-gradient(circle at 100% 0%, #18181b 0%, #09090b 50%);
+}
+
+.app-container {
+    display: flex;
     height: 100%;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
-    color: var(--md-sys-color-on-surface);
-    background-color: var(--md-sys-color-surface);
 }
 
-/* Базовые поверхности */
-
-.app-surface {
-    background-color: var(--md-sys-color-surface);
-}
-
-.app-root {
+/* --- Sidebar --- */
+.sidebar {
+    width: 280px;
+    height: 100%;
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(24px);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    padding: var(--md-padding-lg);
-    gap: var(--md-padding);
+    padding: 40px 0; /* Отступы только сверху/снизу */
 }
 
-/* Эмуляция elevation через цвет */
-
-.elevation-1 {
-    background-color: var(--md-elevation-1);
-}
-
-.elevation-2 {
-    background-color: var(--md-elevation-2);
-}
-
-/* Верхняя панель */
-
-.app-topbar {
+.brand {
+    padding: 0 40px;
+    margin-bottom: 60px;
     display: flex;
     align-items: center;
-    padding: 12px 20px;
-    border-radius: var(--md-radius-large);
-    border: 1px solid var(--md-sys-color-outline);
+    gap: 16px;
 }
 
-.app-title {
-    font-size: 18px;
-    font-weight: 600;
+.logo-icon {
+    width: 42px;
+    height: 42px;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.15));
 }
 
-/* Основной контейнер */
-
-.app-main {
-    flex: 1;
+.brand-text {
     display: flex;
     flex-direction: column;
-    border-radius: var(--md-radius-large);
-    border: 1px solid var(--md-sys-color-outline);
-    padding: var(--md-padding-lg);
-    gap: var(--md-padding);
+    justify-content: center;
 }
 
-/* Вкладки */
-
-.tab-row {
-    display: flex;
-    gap: 8px;
-    border-radius: var(--md-radius-medium);
-    padding: 4px;
-    background-color: rgba(255, 255, 255, 0.03);
+.brand-text h1 {
+    font-family: 'JetBrains Mono', monospace; /* Техно-шрифт */
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: white;
 }
 
-.tab-button {
-    flex: 1;
-    position: relative;
-    padding: 10px 14px;
-    border-radius: 999px;
-    border: none;
-    background: transparent;
-    color: var(--md-sys-color-on-surface);
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.tab-button:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-}
-
-.tab-button.tab-active {
-    background-color: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-}
-
-/* Контент вкладок */
-
-.tab-content {
-    flex: 1;
-    border-radius: var(--md-radius-medium);
-    padding: var(--md-padding-lg);
-    background-color: rgba(0, 0, 0, 0.15);
-    overflow: auto;
-}
-
-.tab-page {
-    display: none;
-}
-
-.tab-page-active {
-    display: block;
-}
-
-/* Типографика */
-
-.headline-large {
-    font-size: 24px;
+.brand-text h2 {
+    font-size: 10px;
     font-weight: 600;
-    margin: 0 0 12px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 4px;
 }
 
-.body-text {
-    font-size: 14px;
-    opacity: 0.85;
-}
-
-/* Кнопки */
-
-.button-row {
+/* Navigation (Новый стиль) */
+.nav-menu {
     display: flex;
-    gap: 12px;
-    margin-top: 20px;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.md-button {
+.nav-item {
     position: relative;
-    display: inline-flex;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 40px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+/* Индикатор слева (полоска) */
+.indicator {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0%; /* Скрыт по умолчанию */
+    background-color: white;
+    transition: height 0.2s ease, box-shadow 0.2s;
+    border-radius: 0 4px 4px 0;
+}
+
+.label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-dim);
+    transition: color 0.2s, transform 0.2s;
+}
+
+/* Hover */
+.nav-item:hover .label {
+    color: #d4d4d8;
+}
+
+/* Active State */
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+}
+
+.nav-item.active .indicator {
+    height: 24px; /* Показываем полоску */
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.nav-item.active .label {
+    color: white;
+    font-weight: 600;
+    transform: translateX(4px); /* Чуть сдвигаем текст */
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.logout:hover .label {
+    color: #ef4444; /* Красный при наведении на выход */
+}
+
+/* --- Main Content --- */
+.main-content {
+    flex: 1;
+    padding: 40px 60px;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 60px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+.content-header h2 {
+    font-size: 36px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    color: white;
+    margin: 0;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    padding: 6px 12px;
+    border-radius: 99px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #10b981; /* Зеленый */
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
+}
+
+.status-text {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+}
+
+/* --- Panels & Empty State --- */
+.tab-panel {
+    display: none;
+    height: 100%;
+}
+.tab-panel.active { display: block; }
+
+.empty-state {
+    height: 60%;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 10px 18px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    transition: box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-    overflow: hidden;
-}
-
-.md-button.filled {
-    background-color: var(--md-sys-color-secondary);
-    color: var(--md-sys-color-on-secondary);
-}
-
-.md-button.filled:hover {
-    background-color: #00bfa5;
-}
-
-.md-button.outlined {
-    background: transparent;
-    color: var(--md-sys-color-on-surface);
-    border: 1px solid var(--md-sys-color-outline);
-}
-
-.md-button.outlined:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Примитивный ripple-эффект */
-
-.md-button::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: rgba(255, 255, 255, 0.16);
+    text-align: center;
     opacity: 0;
-    transform: scale(0.9);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    pointer-events: none;
+    animation: fadeIn 0.6s ease forwards;
 }
 
-.md-button:active::after {
-    opacity: 1;
-    transform: scale(1);
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+.empty-icon {
+    margin-bottom: 24px;
+    color: #3f3f46; /* Очень темный серый */
+    filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: white;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: var(--text-dim);
+    max-width: 300px;
 }
