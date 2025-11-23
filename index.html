@@ -2,549 +2,68 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <title>Tanks Installer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Тёмная цветовая схема в духе Material 3 -->
     <meta name="color-scheme" content="dark">
-    <title>ASSTRALLITY LOADER</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        
-        :root {
-            --bg-color: #090b10;
-            --sidebar-bg: rgba(20, 25, 35, 0.6);
-            --card-bg: rgba(30, 35, 45, 0.4);
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.5);
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.08);
-            --glass: blur(12px);
-        }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(147, 51, 234, 0.1) 0%, transparent 50%);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
+    <link rel="stylesheet" href="style.css">
 
-        /* Скроллбар */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-        /* Снежинки */
-        .snow-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 0; overflow: hidden;
-        }
-        .snowflake {
-            position: absolute; color: rgba(255, 255, 255, 0.3);
-            user-select: none; pointer-events: none;
-        }
-
-        /* Боковая панель */
-        .sidebar {
-            width: 260px;
-            height: 100%;
-            background: var(--sidebar-bg);
-            backdrop-filter: var(--glass);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 24px;
-            z-index: 10;
-            flex-shrink: 0;
-        }
-
-        .brand {
-            font-size: 1.4em;
-            font-weight: 700;
-            margin-bottom: 40px;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-btn {
-            display: flex;
-            align-items: center;
-            padding: 14px 16px;
-            margin-bottom: 8px;
-            border-radius: 12px;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            border: 1px solid transparent;
-        }
-
-        .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-main);
-        }
-
-        .nav-btn.active {
-            background: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
-        }
-
-        .nav-icon { margin-right: 12px; font-size: 1.2em; }
-
-        .sidebar-footer {
-            margin-top: auto;
-            font-size: 0.8em;
-            color: #475569;
-            text-align: center;
-        }
-
-        /* Основной контент */
-        .main-content {
-            flex: 1;
-            padding: 32px 40px;
-            overflow-y: auto;
-            position: relative;
-            z-index: 5;
-        }
-
-        /* Секции */
-        .page { display: none; animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .page.active { display: block; }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 {
-            font-size: 1.8em;
-            margin-bottom: 24px;
-            font-weight: 600;
-        }
-
-        /* Сетка модов */
-        .mods-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        .mod-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .mod-card:hover {
-            transform: translateY(-4px);
-            background: rgba(40, 45, 60, 0.6);
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-        }
-
-        .mod-img {
-            height: 160px;
-            width: 100%;
-            background: #1e293b;
-            object-fit: cover;
-        }
-        
-        .mod-img-placeholder {
-            height: 160px;
-            background: linear-gradient(45deg, #1e293b, #0f172a);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2em; color: #334155;
-        }
-
-        .mod-info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-
-        .mod-title {
-            font-size: 1.1em;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-main);
-        }
-
-        .mod-desc {
-            font-size: 0.9em;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-            line-height: 1.5;
-            flex: 1;
-        }
-
-        /* Кнопки */
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: filter 0.2s;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-primary:hover { filter: brightness(1.1); }
-        .btn-primary:active { transform: scale(0.98); }
-
-        /* Настройки */
-        .settings-group {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            max-width: 800px;
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .setting-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-
-        .setting-text h3 { font-size: 1em; font-weight: 500; margin-bottom: 4px; }
-        .setting-text p { font-size: 0.85em; color: var(--text-muted); }
-
-        .radio-switch {
-            display: flex;
-            background: rgba(0,0,0,0.3);
-            padding: 4px;
-            border-radius: 8px;
-        }
-
-        .radio-switch label {
-            padding: 8px 16px;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 0.9em;
-            color: var(--text-muted);
-            transition: 0.2s;
-        }
-
-        .radio-switch input { display: none; }
-        .radio-switch input:checked + label {
-            background: #334155;
-            color: white;
-        }
-        
-        .path-status { margin-top: 8px; font-size: 0.9em; color: #ef4444; }
-        .path-status.ok { color: #10b981; }
-
-        /* Модальное окно */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center;
-            z-index: 100; opacity: 0; transition: opacity 0.3s;
-        }
-        .modal-overlay.open { opacity: 1; }
-        
-        .modal-card {
-            background: #1e293b;
-            border: 1px solid var(--border);
-            padding: 32px;
-            border-radius: 20px;
-            width: 400px;
-            text-align: center;
-            transform: scale(0.9); transition: transform 0.3s;
-        }
-        .modal-overlay.open .modal-card { transform: scale(1); }
-
-        .progress-bg {
-            height: 6px; background: #334155; border-radius: 10px;
-            margin: 20px 0 10px 0; overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%; width: 0%;
-            background: var(--accent);
-            transition: width 0.3s;
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
-
-    </style>
+    <!-- qwebchannel.js: возьми стандартный файл из Qt и положи рядом -->
+    <script src="qwebchannel.js"></script>
+    <script src="main.js" defer></script>
 </head>
-<body>
+<body class="app-surface">
+    <div class="app-root">
+        <header class="app-topbar elevation-2">
+            <div class="app-title">Tanks Installer</div>
+        </header>
 
-    <!-- Снег -->
-    <div class="snow-container" id="snow"></div>
+        <main class="app-main elevation-1">
+            <nav class="tab-row">
+                <button class="tab-button tab-active" data-tab="tab1" onclick="onTabClick('tab1')">
+                    Тест
+                </button>
+                <button class="tab-button" data-tab="tab2" onclick="onTabClick('tab2')">
+                    Тест
+                </button>
+                <button class="tab-button" data-tab="tab3" onclick="onTabClick('tab3')">
+                    Тест
+                </button>
+            </nav>
 
-    <!-- Навигация -->
-    <aside class="sidebar">
-        <div class="brand">ASSTRALLITY</div>
-        
-        <div class="nav-btn active" onclick="showPage('mods', this)">
-            <span class="nav-icon">📦</span> Моды
-        </div>
-        <div class="nav-btn" onclick="showPage('settings', this)">
-            <span class="nav-icon">⚙️</span> Настройки
-        </div>
-        <div class="nav-btn" onclick="showPage('info', this)">
-            <span class="nav-icon">ℹ️</span> Инфо
-        </div>
-
-        <div class="sidebar-footer">v1.0.3 Beta</div>
-    </aside>
-
-    <!-- Контент -->
-    <main class="main-content">
-        
-        <!-- Страница Модов -->
-        <div id="mods" class="page active">
-            <h2>Каталог модов</h2>
-            <div class="mods-grid" id="mods-list">
-                <!-- JS заполнит это -->
-                <p style="color: var(--text-muted)">Загрузка каталога...</p>
-            </div>
-        </div>
-
-        <!-- Страница Настроек -->
-        <div id="settings" class="page">
-            <h2>Настройки</h2>
-            <div class="settings-group">
-                <div class="setting-item">
-                    <div class="setting-text">
-                        <h3>Метод установки</h3>
-                        <p>Куда распаковывать файлы модов</p>
-                    </div>
-                    <div class="radio-switch">
-                        <input type="radio" id="m1" name="method" value="sdls" checked onchange="updMethod()">
-                        <label for="m1">sDLS</label>
-                        
-                        <input type="radio" id="m2" name="method" value="data" onchange="updMethod()">
-                        <label for="m2">Data</label>
+            <section class="tab-content">
+                <div id="tab1" class="tab-page tab-page-active">
+                    <h1 class="headline-large">Тестовая вкладка 1</h1>
+                    <p class="body-text">
+                        Здесь будет основной экран установщика (описание, кнопка «Установить» и т.п.).
+                    </p>
+                    <div class="button-row">
+                        <button class="md-button filled" onclick="onActionClick('install')">
+                            Установить игру
+                        </button>
+                        <button class="md-button outlined" onclick="onActionClick('exit')">
+                            Выход
+                        </button>
                     </div>
                 </div>
 
-                <div class="setting-item">
-                    <div class="setting-text">
-                        <h3>Путь к игре</h3>
-                        <p id="path-display" class="path-status">Путь не выбран</p>
-                    </div>
-                    <button class="btn-primary" style="width: auto; padding: 8px 20px;" onclick="browsePath()">Обзор...</button>
+                <div id="tab2" class="tab-page">
+                    <h1 class="headline-large">Тестовая вкладка 2</h1>
+                    <p class="body-text">
+                        Вкладка под моды, логи, прогресс загрузки — что угодно.
+                    </p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Страница Инфо -->
-        <div id="info" class="page">
-            <h2>Информация</h2>
-            <div class="settings-group">
-                <p style="margin-bottom: 20px; line-height: 1.6; color: var(--text-muted);">
-                    Asstrallity Loader — современный инструмент для управления модификациями World of Tanks Blitz.
-                    Используйте GitHub репозиторий для автоматического обновления списка модов.
-                </p>
-                <button class="btn-primary" onclick="testUpd()">Проверить обновления лаунчера</button>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Модалка прогресса -->
-    <div class="modal-overlay" id="modal">
-        <div class="modal-card">
-            <h3 id="modal-title" style="margin-bottom: 10px;">Загрузка...</h3>
-            <div class="progress-bg">
-                <div class="progress-bar" id="p-bar"></div>
-            </div>
-            <p id="modal-text" style="font-size: 0.9em; color: var(--text-muted);">Подготовка файлов</p>
-        </div>
+                <div id="tab3" class="tab-page">
+                    <h1 class="headline-large">Тестовая вкладка 3</h1>
+                    <p class="body-text">
+                        Вкладка под настройки лаунчера и прочие опции.
+                    </p>
+                </div>
+            </section>
+        </main>
     </div>
-
-    <script>
-        // --- ЛОГИКА СНЕГА ---
-        const snowContainer = document.getElementById('snow');
-        const snowflakeCount = 30;
-
-        for (let i = 0; i < snowflakeCount; i++) {
-            const flake = document.createElement('div');
-            flake.classList.add('snowflake');
-            flake.innerHTML = '❄';
-            resetFlake(flake);
-            snowContainer.appendChild(flake);
-        }
-
-        function resetFlake(el) {
-            el.style.left = Math.random() * 100 + 'vw';
-            el.style.top = -Math.random() * 20 + 'px';
-            el.style.fontSize = (Math.random() * 10 + 10) + 'px';
-            el.style.opacity = Math.random() * 0.5 + 0.2;
-            el.dataset.speed = Math.random() * 1 + 0.5;
-            el.dataset.swing = Math.random() * 2 - 1; // колебание
-        }
-
-        function animateSnow() {
-            const flakes = document.querySelectorAll('.snowflake');
-            flakes.forEach(el => {
-                let top = parseFloat(el.style.top || 0);
-                let left = parseFloat(el.style.left || 0);
-                
-                top += parseFloat(el.dataset.speed);
-                // Легкое покачивание
-                // left += Math.sin(top / 50) * 0.5; 
-
-                if (top > window.innerHeight) {
-                    resetFlake(el);
-                } else {
-                    el.style.top = top + 'px';
-                }
-            });
-            requestAnimationFrame(animateSnow);
-        }
-        requestAnimationFrame(animateSnow);
-
-        // --- ЛОГИКА ИНТЕРФЕЙСА ---
-        
-        let modsData = [];
-
-        // Переключение страниц
-        function showPage(id, btn) {
-            // Смена класса кнопок
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-
-            // Смена страниц
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
-        // Загрузка модов
-        async function init() {
-            try {
-                const res = await fetch('https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/mods.json');
-                modsData = await res.json();
-                renderMods();
-            } catch (e) {
-                document.getElementById('mods-list').innerHTML = '<p style="color: #ef4444">Ошибка сети. Не удалось загрузить список.</p>';
-            }
-        }
-
-        function renderMods() {
-            const grid = document.getElementById('mods-list');
-            if (!modsData.length) {
-                grid.innerHTML = '<p>Список пуст.</p>';
-                return;
-            }
-            
-            let html = '';
-            modsData.forEach((mod, idx) => {
-                const imgHtml = mod.image 
-                    ? `<img class="mod-img" src="${mod.image}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                       <div class="mod-img-placeholder" style="display:none">📦</div>` 
-                    : `<div class="mod-img-placeholder">📦</div>`;
-
-                html += `
-                <div class="mod-card">
-                    ${imgHtml}
-                    <div class="mod-info">
-                        <div class="mod-title">${mod.name || 'Без названия'}</div>
-                        <div class="mod-desc">${mod.description || 'Описание отсутствует'}</div>
-                        <button class="btn-primary" onclick="startInstall(${idx})">УСТАНОВИТЬ</button>
-                    </div>
-                </div>`;
-            });
-            grid.innerHTML = html;
-        }
-
-        // Взаимодействие с Python (заглушки для веба)
-        function startInstall(idx) {
-            const mod = modsData[idx];
-            if (!mod || !mod.file) return;
-            
-            // Нормализация URL для GitHub
-            let url = mod.file;
-            if (!url.startsWith('http')) {
-                url = `https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/${url}`;
-            }
-            
-            console.log('INSTALL_MOD:' + url);
-        }
-
-        function browsePath() { console.log('BROWSE_PATH'); }
-        function updMethod() { 
-            const m = document.querySelector('input[name="method"]:checked').value;
-            console.log('INSTALL_METHOD:' + m); 
-        }
-        function testUpd() { console.log('SELF_UPDATE_TEST'); }
-
-        // Функции для управления из Python
-        function updateGameStatus(isConnected, path) {
-            const el = document.getElementById('path-display');
-            if (isConnected) {
-                el.textContent = path;
-                el.classList.add('ok');
-            } else {
-                el.textContent = "Путь не выбран или неверен";
-                el.classList.remove('ok');
-            }
-        }
-        // Алиас для старого имени функции
-        function updateConnectionStatus(c, p) { updateGameStatus(c, p); }
-
-        // Управление модалкой прогресса
-        const modal = document.getElementById('modal');
-        const bar = document.getElementById('p-bar');
-        const mTitle = document.getElementById('modal-title');
-        const mText = document.getElementById('modal-text');
-
-        function updateProgress(pct, msg) {
-            modal.style.display = 'flex';
-            // Небольшая задержка для плавности opacity
-            setTimeout(() => modal.classList.add('open'), 10);
-            
-            bar.style.width = pct + '%';
-            if(msg) mText.textContent = msg;
-        }
-
-        function showSuccess(msg) {
-            mTitle.textContent = 'Готово!';
-            bar.style.width = '100%';
-            mText.textContent = msg;
-            setTimeout(closeModal, 2000);
-        }
-
-        function showError(msg) {
-            mTitle.textContent = 'Ошибка';
-            bar.style.backgroundColor = '#ef4444';
-            mText.textContent = msg;
-            setTimeout(closeModal, 3000);
-        }
-
-        function closeModal() {
-            modal.classList.remove('open');
-            setTimeout(() => {
-                modal.style.display = 'none';
-                // Сброс
-                bar.style.width = '0%';
-                bar.style.backgroundColor = 'var(--accent)';
-                mTitle.textContent = 'Загрузка...';
-            }, 300);
-        }
-
-        // Старт
-        init();
-
-    </script>
 </body>
 </html>
