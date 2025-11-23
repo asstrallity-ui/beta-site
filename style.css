@@ -1,0 +1,215 @@
+:root {
+    /* Базовые тёмные цвета (в духе Material Dark) */
+    --md-sys-color-surface: #121212;
+    --md-sys-color-surface-variant: #1e1e1e;
+    --md-sys-color-on-surface: #ffffff;
+    --md-sys-color-outline: #3c3c3c;
+
+    /* Акцент (можешь поменять под бренд) */
+    --md-sys-color-primary: #8ab4ff;
+    --md-sys-color-on-primary: #000000;
+
+    /* Для табов и кнопок */
+    --md-sys-color-secondary: #03dac6;
+    --md-sys-color-on-secondary: #000000;
+
+    --md-radius-large: 24px;
+    --md-radius-medium: 16px;
+    --md-radius-small: 12px;
+
+    --md-padding: 16px;
+    --md-padding-lg: 24px;
+
+    --md-elevation-1: #1e1e1e;
+    --md-elevation-2: #232323;
+}
+
+/* Сбросы */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
+    color: var(--md-sys-color-on-surface);
+    background-color: var(--md-sys-color-surface);
+}
+
+/* Базовые поверхности */
+
+.app-surface {
+    background-color: var(--md-sys-color-surface);
+}
+
+.app-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: var(--md-padding-lg);
+    gap: var(--md-padding);
+}
+
+/* Эмуляция elevation через цвет */
+
+.elevation-1 {
+    background-color: var(--md-elevation-1);
+}
+
+.elevation-2 {
+    background-color: var(--md-elevation-2);
+}
+
+/* Верхняя панель */
+
+.app-topbar {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: var(--md-radius-large);
+    border: 1px solid var(--md-sys-color-outline);
+}
+
+.app-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Основной контейнер */
+
+.app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--md-radius-large);
+    border: 1px solid var(--md-sys-color-outline);
+    padding: var(--md-padding-lg);
+    gap: var(--md-padding);
+}
+
+/* Вкладки */
+
+.tab-row {
+    display: flex;
+    gap: 8px;
+    border-radius: var(--md-radius-medium);
+    padding: 4px;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.tab-button {
+    flex: 1;
+    position: relative;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab-button:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.tab-button.tab-active {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+/* Контент вкладок */
+
+.tab-content {
+    flex: 1;
+    border-radius: var(--md-radius-medium);
+    padding: var(--md-padding-lg);
+    background-color: rgba(0, 0, 0, 0.15);
+    overflow: auto;
+}
+
+.tab-page {
+    display: none;
+}
+
+.tab-page-active {
+    display: block;
+}
+
+/* Типографика */
+
+.headline-large {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+
+.body-text {
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+/* Кнопки */
+
+.button-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.md-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    overflow: hidden;
+}
+
+.md-button.filled {
+    background-color: var(--md-sys-color-secondary);
+    color: var(--md-sys-color-on-secondary);
+}
+
+.md-button.filled:hover {
+    background-color: #00bfa5;
+}
+
+.md-button.outlined {
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    border: 1px solid var(--md-sys-color-outline);
+}
+
+.md-button.outlined:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Примитивный ripple-эффект */
+
+.md-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.16);
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+}
+
+.md-button:active::after {
+    opacity: 1;
+    transform: scale(1);
+}
