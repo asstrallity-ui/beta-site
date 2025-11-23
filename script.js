@@ -21,10 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMods(); 
 });
 
-
 const REPO_BASE_URL = 'https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/';
 const REPO_JSON_URL = REPO_BASE_URL + 'mods.json';
-
 
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
@@ -38,9 +36,7 @@ const modalStatus = document.getElementById('modal-status');
 const progressBar = document.getElementById('progress-bar');
 const progressPercent = document.getElementById('progress-percent');
 
-
 let currentInstallMethod = 'sdls'; 
-
 
 // Навигация
 navItems.forEach(item => {
@@ -51,16 +47,13 @@ navItems.forEach(item => {
     });
 });
 
-
 function handleTabChange(tab) {
     contentArea.classList.add('fade-out');
-
 
     setTimeout(() => {
         const title = document.getElementById('page-title');
         contentArea.innerHTML = '';
         contentArea.className = tab === 'mods' ? 'content-grid' : '';
-
 
         if (tab === 'mods') {
             title.innerText = 'Каталог модификаций';
@@ -85,10 +78,8 @@ function handleTabChange(tab) {
             contentArea.classList.remove('fade-out');
         });
 
-
     }, 250); 
 }
-
 
 function renderInstallMethods() {
     contentArea.innerHTML = `
@@ -118,7 +109,6 @@ function renderInstallMethods() {
     const sdlsToggle = document.getElementById('toggle-sdls');
     const noSdlsToggle = document.getElementById('toggle-nosdls');
 
-
     sdlsToggle.addEventListener('change', () => {
         if (sdlsToggle.checked) { noSdlsToggle.checked = false; currentInstallMethod = 'sdls'; } 
         else { noSdlsToggle.checked = true; currentInstallMethod = 'no_sdls'; }
@@ -129,7 +119,6 @@ function renderInstallMethods() {
     });
 }
 
-
 async function loadMods() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div><p>Загрузка списка...</p></div>`;
     try {
@@ -137,14 +126,9 @@ async function loadMods() {
         try {
             const response = await fetch(REPO_JSON_URL);
             if (!response.ok) throw new Error('GitHub JSON not found');
-            
-            // === ВОТ ЗДЕСЬ БЫЛА ОШИБКА ===
-            const data = await response.json();
-            mods = data.mods || []; // Берем массив из свойства mods, иначе пустой массив
-            
+            mods = await response.json();
         } catch (err) {
             console.warn('Demo Mode');
-            // Демо-режим, если JSON не загрузился
             mods = [{ id: "demo", name: "Demo Mod", file: "demo.zip" }];
         }
         renderMods(mods);
@@ -153,21 +137,13 @@ async function loadMods() {
     }
 }
 
-
 function renderMods(mods) {
     contentArea.innerHTML = '';
-    // Добавлена проверка, чтобы не упало, если mods пустой
-    if (!mods || mods.length === 0) {
-         contentArea.innerHTML = `<div class="empty-state"><h3>Модов нет</h3></div>`;
-         return;
-    }
-
     mods.forEach(mod => {
         let rawUrl = mod.file || mod.file_url || mod.url || "";
         let fullUrl = rawUrl;
         if (rawUrl && !rawUrl.startsWith('http')) { fullUrl = REPO_BASE_URL + rawUrl; }
         const imageUrl = mod.image || "https://via.placeholder.com/400x220/111/fff?text=No+Image";
-
 
         const card = document.createElement('div');
         card.className = 'mod-card';
@@ -185,10 +161,8 @@ function renderMods(mods) {
     });
 }
 
-
 function startInstallProcess(id, name, url) {
     if (!url || url === "undefined") return alert("Ссылка не найдена!");
-
 
     installView.classList.remove('view-hidden');
     successView.classList.add('view-hidden');
@@ -200,7 +174,6 @@ function startInstallProcess(id, name, url) {
     modalStatus.innerText = "Подготовка...";
     modal.classList.remove('hidden');
 
-
     if (window.pywebview) {
         window.pywebview.api.install_mod(id, url, currentInstallMethod);
     } else {
@@ -209,32 +182,28 @@ function startInstallProcess(id, name, url) {
     }
 }
 
-
 window.updateRealProgress = function(percent, text) {
     progressBar.style.width = percent + "%";
     progressPercent.innerText = percent + "%";
     modalStatus.innerText = text;
 }
 
-
 window.finishInstall = function(success, message) {
     installView.classList.add('view-hidden');
-
 
     if (success) {
         successView.classList.remove('view-hidden');
         setTimeout(closeModal, 2500); 
     } else {
         errorView.classList.remove('view-hidden');
-        if (message && message.includes("уже установлен")) {
+        if (message.includes("уже установлен")) {
             errorMessage.innerText = "Сорян, у тебя уже есть такой мод....";
         } else {
-            errorMessage.innerText = message || "Ошибка установки";
+            errorMessage.innerText = message;
         }
         setTimeout(closeModal, 3500);
     }
 }
-
 
 function closeModal() {
     modal.classList.add('hidden');
