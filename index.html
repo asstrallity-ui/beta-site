@@ -2,68 +2,98 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Tanks Installer</title>
+    <title>LOADER ASTR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Тёмная цветовая схема в духе Material 3 -->
-    <meta name="color-scheme" content="dark">
-
     <link rel="stylesheet" href="style.css">
-
-    <!-- qwebchannel.js: возьми стандартный файл из Qt и положи рядом -->
     <script src="qwebchannel.js"></script>
     <script src="main.js" defer></script>
 </head>
-<body class="app-surface">
-    <div class="app-root">
-        <header class="app-topbar elevation-2">
-            <div class="app-title">Tanks Installer</div>
-        </header>
+<body>
 
-        <main class="app-main elevation-1">
-            <nav class="tab-row">
-                <button class="tab-button tab-active" data-tab="tab1" onclick="onTabClick('tab1')">
-                    Тест
+    <div class="app-container">
+        
+        <!-- Glassy Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <!-- Новая SVG иконка "Кристалл/Прицел" -->
+                <div class="logo-icon">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 4L4 12L20 20L36 12L20 4Z" fill="white" fill-opacity="0.9"/>
+                        <path d="M4 12V28L20 36V20L4 12Z" fill="white" fill-opacity="0.5"/>
+                        <path d="M36 12V28L20 36V20L36 12Z" fill="white" fill-opacity="0.2"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>ASTR</h1>
+                    <h2>LOADER</h2>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <!-- Вкладки теперь "реечные" -->
+                <button class="nav-item active" data-tab="tab-mods" onclick="onTabClick('tab-mods')">
+                    <span class="indicator"></span>
+                    <span class="label">Мои моды</span>
                 </button>
-                <button class="tab-button" data-tab="tab2" onclick="onTabClick('tab2')">
-                    Тест
+                <button class="nav-item" data-tab="tab-info" onclick="onTabClick('tab-info')">
+                    <span class="indicator"></span>
+                    <span class="label">Информация</span>
                 </button>
-                <button class="tab-button" data-tab="tab3" onclick="onTabClick('tab3')">
-                    Тест
+                <button class="nav-item" data-tab="tab-methods" onclick="onTabClick('tab-methods')">
+                    <span class="indicator"></span>
+                    <span class="label">Установка</span>
                 </button>
             </nav>
 
-            <section class="tab-content">
-                <div id="tab1" class="tab-page tab-page-active">
-                    <h1 class="headline-large">Тестовая вкладка 1</h1>
-                    <p class="body-text">
-                        Здесь будет основной экран установщика (описание, кнопка «Установить» и т.п.).
-                    </p>
-                    <div class="button-row">
-                        <button class="md-button filled" onclick="onActionClick('install')">
-                            Установить игру
-                        </button>
-                        <button class="md-button outlined" onclick="onActionClick('exit')">
-                            Выход
-                        </button>
+            <div class="sidebar-footer">
+                <button class="nav-item logout" onclick="onActionClick('exit')">
+                    <span class="indicator"></span>
+                    <span class="label">Выход</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <header class="content-header">
+                <h2 id="page-title">БИБЛИОТЕКА</h2>
+                <div class="user-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">READY</span>
+                </div>
+            </header>
+
+            <!-- Tab Panels -->
+            <div id="tab-mods" class="tab-panel active">
+                <!-- Пустое состояние (Empty State) -->
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
                     </div>
+                    <h3>Нет активных модов</h3>
+                    <p>Выберите модпак для начала установки</p>
                 </div>
+            </div>
 
-                <div id="tab2" class="tab-page">
-                    <h1 class="headline-large">Тестовая вкладка 2</h1>
-                    <p class="body-text">
-                        Вкладка под моды, логи, прогресс загрузки — что угодно.
-                    </p>
+            <div id="tab-info" class="tab-panel">
+                <div class="empty-state">
+                    <p style="opacity: 0.5;">Информация о системе не загружена</p>
                 </div>
+            </div>
 
-                <div id="tab3" class="tab-page">
-                    <h1 class="headline-large">Тестовая вкладка 3</h1>
-                    <p class="body-text">
-                        Вкладка под настройки лаунчера и прочие опции.
-                    </p>
+            <div id="tab-methods" class="tab-panel">
+                <div class="empty-state">
+                   <p style="opacity: 0.5;">Методы установки не выбраны</p>
                 </div>
-            </section>
+            </div>
+
         </main>
     </div>
+
 </body>
 </html>
