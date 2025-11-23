@@ -1,50 +1,41 @@
 let bridge = null;
 
 function setupWebChannel() {
-    if (typeof QWebChannel === "undefined" || typeof qt === "undefined") {
-        console.warn("QWebChannel/qt не найдены — вероятно, страница открыта не из PyQt.");
-        return;
-    }
-
+    if (typeof QWebChannel === "undefined" || typeof qt === "undefined") return;
     new QWebChannel(qt.webChannelTransport, function (channel) {
         bridge = channel.objects.bridge;
-        console.log("[JS] WebChannel готов, bridge =", bridge);
     });
 }
 
-/**
- * Переключение вкладок по клику
- */
 function onTabClick(tabId) {
-    // Переключение CSS-классов
-    document.querySelectorAll(".tab-button").forEach(btn => {
-        const isActive = btn.dataset.tab === tabId;
-        btn.classList.toggle("tab-active", isActive);
-    });
+    // Переключение кнопок
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`button[data-tab="${tabId}"]`).classList.add('active');
 
-    document.querySelectorAll(".tab-page").forEach(page => {
-        const isActive = page.id === tabId;
-        page.classList.toggle("tab-page-active", isActive);
-    });
+    // Переключение панелей
+    document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
 
-    // Сообщаем Python, что пользователь переключил вкладку
-    if (bridge && typeof bridge.onTabClicked === "function") {
-        bridge.onTabClicked(tabId);
-    }
+    // Меняем заголовок (Upper Case для стиля)
+    const titles = {
+        'tab-mods': 'БИБЛИОТЕКА',
+        'tab-info': 'ИНФОРМАЦИЯ',
+        'tab-methods': 'УСТАНОВКА'
+    };
+    
+    const titleEl = document.getElementById('page-title');
+    // Эффект "перепечатывания" (опционально, но стильно)
+    titleEl.style.opacity = 0;
+    setTimeout(() => {
+        titleEl.innerText = titles[tabId] || 'МЕНЮ';
+        titleEl.style.opacity = 1;
+    }, 150);
+
+    if (bridge) bridge.onTabClicked(tabId);
 }
 
-/**
- * Действия (установка, выход и т.п.)
- */
-function onActionClick(actionName) {
-    if (bridge && typeof bridge.onAction === "function") {
-        bridge.onAction(actionName);
-    } else {
-        console.log("[JS] Action:", actionName);
-    }
+function onActionClick(action) {
+    if (bridge) bridge.onAction(action);
 }
 
-// Запуск инициализации после загрузки DOM
-document.addEventListener("DOMContentLoaded", () => {
-    setupWebChannel();
-});
+document.addEventListener("DOMContentLoaded", setupWebChannel);
