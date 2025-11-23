@@ -128,9 +128,6 @@ function renderMods(mods) {
         const card = document.createElement('div');
         card.className = 'mod-card';
         
-        const disabledAttr = isAppEnvironment ? '' : 'disabled'; // Отключаем только визуально для надежности
-        const btnText = isAppEnvironment ? 'Установить' : 'Доступно в приложении';
-        
         card.innerHTML = `
             <img src="${imageUrl}" class="card-image" alt="${mod.name}">
             <div class="card-content">
@@ -164,7 +161,10 @@ function startInstallProcess(id, name, url) {
     
     progressBar.style.width = "0%";
     progressPercent.innerText = "0%";
-    modalTitle.innerText = `Установка: ${name}`;
+    
+    // ИЗМЕНЕНО ЗДЕСЬ: Просто название мода, без "Установка:"
+    modalTitle.innerText = name;
+    
     modalStatus.innerText = "Подключение...";
     modal.classList.remove('hidden');
     
@@ -174,8 +174,7 @@ function startInstallProcess(id, name, url) {
 window.updateRealProgress = function(percent, text) {
     progressBar.style.width = percent + "%";
     progressPercent.innerText = percent + "%";
-    // Текст уже должен приходить в формате "Скачивание: 45% (2.1 MB/s)" из Python
-    modalStatus.innerText = text; 
+    modalStatus.innerText = text;
 }
 
 window.finishInstall = function(success, message) {
