@@ -1,24 +1,13 @@
-// --- ЗАПУСК ЗАСТАВКИ ---
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
+    setTimeout(() => { 
+        splash.classList.add('fade-out'); 
+    }, 2600); 
     
-    // Мы гарантируем, что заставка висит минимум 6 секунд
-    // Используем requestAnimationFrame для уверенности, что отрисовка началась
-    requestAnimationFrame(() => {
-        setTimeout(() => {
-            splash.classList.add('fade-out');
-            
-            // Полностью убираем из DOM через секунду (после анимации CSS)
-            // чтобы не перекрывал клики, если visibility: hidden не сработает
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 1000);
-            
-        }, 6000); // 6000 мс = 6 секунд задержки
-    });
-    
-    // Загружаем данные параллельно
     loadMods(); 
+    
+    // Проверка среды (ждём чуть-чуть, пока pywebview инжектится)
+    setTimeout(checkEnvironment, 1000);
 });
 
 const REPO_BASE_URL = 'https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/';
@@ -37,6 +26,16 @@ const progressBar = document.getElementById('progress-bar');
 const progressPercent = document.getElementById('progress-percent');
 
 let currentInstallMethod = 'sdls'; 
+let isAppEnvironment = false; // Флаг: запущено в приложении или нет
+
+// Проверяем, доступны ли API
+function checkEnvironment() {
+    if (window.pywebview) {
+        isAppEnvironment = true;
+        // Если моды уже загрузились, разблокируем кнопки
+        document.querySelectorAll('.install-btn').forEach(btn => btn.disabled = false);
+    }
+}
 
 // Навигация
 navItems.forEach(item => {
@@ -49,7 +48,6 @@ navItems.forEach(item => {
 
 function handleTabChange(tab) {
     contentArea.classList.add('fade-out');
-
     setTimeout(() => {
         const title = document.getElementById('page-title');
         contentArea.innerHTML = '';
@@ -64,7 +62,6 @@ function handleTabChange(tab) {
             renderInstallMethods();
         } else if (tab === 'authors') {
             title.innerText = 'Авторы';
-            // КРАСИВАЯ ЗАГЛУШКА
             contentArea.innerHTML = `
                 <div class="empty-state">
                     <span class="material-symbols-outlined empty-icon">engineering</span>
@@ -73,11 +70,7 @@ function handleTabChange(tab) {
                 </div>
             `;
         }
-        
-        requestAnimationFrame(() => {
-            contentArea.classList.remove('fade-out');
-        });
-
+        requestAnimationFrame(() => { contentArea.classList.remove('fade-out'); });
     }, 250); 
 }
 
@@ -108,32 +101,25 @@ function renderInstallMethods() {
     `;
     const sdlsToggle = document.getElementById('toggle-sdls');
     const noSdlsToggle = document.getElementById('toggle-nosdls');
-
-    sdlsToggle.addEventListener('change', () => {
+    sdlsToggle.addEventListener('change', () => { 
         if (sdlsToggle.checked) { noSdlsToggle.checked = false; currentInstallMethod = 'sdls'; } 
-        else { noSdlsToggle.checked = true; currentInstallMethod = 'no_sdls'; }
+        else { noSdlsToggle.checked = true; currentInstallMethod = 'no_sdls'; } 
     });
-    noSdlsToggle.addEventListener('change', () => {
+    noSdlsToggle.addEventListener('change', () => { 
         if (noSdlsToggle.checked) { sdlsToggle.checked = false; currentInstallMethod = 'no_sdls'; } 
-        else { sdlsToggle.checked = true; currentInstallMethod = 'sdls'; }
+        else { sdlsToggle.checked = true; currentInstallMethod = 'sdls'; } 
     });
 }
 
 async function loadMods() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div><p>Загрузка списка...</p></div>`;
     try {
-        let mods = [];
-        try {
-            const response = await fetch(REPO_JSON_URL);
-            if (!response.ok) throw new Error('GitHub JSON not found');
-            mods = await response.json();
-        } catch (err) {
-            console.warn('Demo Mode');
-            mods = [{ id: "demo", name: "Demo Mod", file: "demo.zip" }];
-        }
+        const response = await fetch(REPO_JSON_URL);
+        if (!response.ok) throw new Error('Ошибка сети');
+        const mods = await response.json();
         renderMods(mods);
     } catch (error) {
-        contentArea.innerHTML = `<p style="color:#ff5252; text-align:center;">Ошибка: ${error.message}</p>`;
+        contentArea.innerHTML = `<p style="color:#ff5252; text-align:center;">Не удалось загрузить список модов.<br>${error.message}</p>`;
     }
 }
 
@@ -143,17 +129,23 @@ function renderMods(mods) {
         let rawUrl = mod.file || mod.file_url || mod.url || "";
         let fullUrl = rawUrl;
         if (rawUrl && !rawUrl.startsWith('http')) { fullUrl = REPO_BASE_URL + rawUrl; }
+        
         const imageUrl = mod.image || "https://via.placeholder.com/400x220/111/fff?text=No+Image";
-
+        
         const card = document.createElement('div');
         card.className = 'mod-card';
+        // Создаем кнопку с атрибутом disabled по умолчанию
+        // Если isAppEnvironment == true, то убираем disabled сразу
+        const disabledAttr = isAppEnvironment ? '' : 'disabled';
+        const btnText = isAppEnvironment ? 'Установить' : 'Доступно в приложении';
+        
         card.innerHTML = `
             <img src="${imageUrl}" class="card-image" alt="${mod.name}">
             <div class="card-content">
                 <h3 class="card-title">${mod.name || "Без названия"}</h3>
                 <p class="card-desc">${mod.description || ""}</p>
-                <button class="install-btn" onclick="startInstallProcess('${mod.id}', '${mod.name}', '${fullUrl}')">
-                    <span class="material-symbols-outlined">download</span> Установить
+                <button class="install-btn" ${disabledAttr} onclick="startInstallProcess('${mod.id}', '${mod.name}', '${fullUrl}')">
+                    <span class="material-symbols-outlined">download</span> ${btnText}
                 </button>
             </div>
         `;
@@ -162,8 +154,9 @@ function renderMods(mods) {
 }
 
 function startInstallProcess(id, name, url) {
-    if (!url || url === "undefined") return alert("Ссылка не найдена!");
-
+    if (!isAppEnvironment) return; // Двойная защита: если не приложение, выходим
+    if (!url || url === "undefined") return;
+    
     installView.classList.remove('view-hidden');
     successView.classList.add('view-hidden');
     errorView.classList.add('view-hidden');
@@ -173,13 +166,8 @@ function startInstallProcess(id, name, url) {
     modalTitle.innerText = `Установка: ${name}`;
     modalStatus.innerText = "Подготовка...";
     modal.classList.remove('hidden');
-
-    if (window.pywebview) {
-        window.pywebview.api.install_mod(id, url, currentInstallMethod);
-    } else {
-        alert("Запустите через Python!");
-        closeModal();
-    }
+    
+    window.pywebview.api.install_mod(id, url, currentInstallMethod);
 }
 
 window.updateRealProgress = function(percent, text) {
@@ -190,13 +178,12 @@ window.updateRealProgress = function(percent, text) {
 
 window.finishInstall = function(success, message) {
     installView.classList.add('view-hidden');
-
     if (success) {
         successView.classList.remove('view-hidden');
         setTimeout(closeModal, 2500); 
     } else {
         errorView.classList.remove('view-hidden');
-        if (message.includes("уже установлен")) {
+        if (message && message.includes("уже установлен")) {
             errorMessage.innerText = "Сорян, у тебя уже есть такой мод....";
         } else {
             errorMessage.innerText = message;
