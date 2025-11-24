@@ -76,19 +76,26 @@ function handleTabChange(tab) {
         } else if (tab === 'authors') {
             title.innerText = 'Информация';
             
-            // НОВАЯ ВЕРСТКА: ДВЕ БОЛЬШИЕ ПАНЕЛИ
+            // ССЫЛКИ НА АВАТАРКИ (ПРОВЕРЬ ПУТИ!)
+            // Я предположил, что Refuzo это DorTep, раз моды от него
+            const refuzoAvatar = 'https://rh-archive.ru/mods_files_github/DorTep/AV/avatar.jpg'; 
+            const asstrallityAvatar = 'https://rh-archive.ru/mods_files_github/Asstrallity/AV/avatar.jpg';
+
             contentArea.innerHTML = `
                 <div class="about-page-container">
                     
-                    <!-- БОЛЬШАЯ ПАНЕЛЬ АВТОРОВ -->
                     <div class="big-panel">
                         <h2 class="panel-title">Команда проекта</h2>
                         <div class="authors-list">
+                            
                             <!-- Refuzo -->
                             <div class="author-row">
-                                <div class="author-avatar" style="background-color: #ffb74d;">R</div>
+                                <div class="author-avatar-wrapper">
+                                    <img src="${refuzoAvatar}" alt="Refuzo" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                    <div class="author-avatar-placeholder" style="background-color: #ffb74d; display: none;">R</div>
+                                </div>
                                 <div class="author-details">
-                                    <h3>Refuzo</h3>
+                                    <h3>Refuzo (DorTep)</h3>
                                     <span class="role">Founder / Lead Modder</span>
                                     <p>Основной мододел танкового дерьма. Живёт и спит в этой параше более 6 лет. Знает о структуре файлов игры больше, чем сами разработчики.</p>
                                 </div>
@@ -98,7 +105,10 @@ function handleTabChange(tab) {
 
                             <!-- Asstrallity -->
                             <div class="author-row">
-                                <div class="author-avatar" style="background-color: #d0bcff;">A</div>
+                                <div class="author-avatar-wrapper">
+                                    <img src="${asstrallityAvatar}" alt="Asstrallity" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                    <div class="author-avatar-placeholder" style="background-color: #d0bcff; display: none;">A</div>
+                                </div>
                                 <div class="author-details">
                                     <h3>ASSTRALLITY</h3>
                                     <span class="role">Developer / UI/UX</span>
@@ -108,7 +118,6 @@ function handleTabChange(tab) {
                         </div>
                     </div>
 
-                    <!-- БОЛЬШАЯ ПАНЕЛЬ О ПРОГРАММЕ -->
                     <div class="big-panel">
                         <h2 class="panel-title">О приложении</h2>
                         <div class="app-details">
@@ -116,7 +125,7 @@ function handleTabChange(tab) {
                             <p class="app-desc">
                                 Автоматический установщик модов для Tanks Blitz. Поддерживает Steam DLC System (sDLS) и безопасную установку без поломки клиента игры.
                             </p>
-                            <p class="app-credits">(C) ASSTRALLITY 2025</p>
+                            <p class="app-credits">Powered by Python, PyWebView & Pure Hate.</p>
                         </div>
                     </div>
 
@@ -278,4 +287,3 @@ window.finishInstall = function(success, message) {
 function closeModal() {
     modal.classList.add('hidden');
 }
-
