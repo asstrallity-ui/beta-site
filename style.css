@@ -28,6 +28,7 @@ body {
                       radial-gradient(circle at bottom left, #181a25 0%, transparent 40%); 
 }
 
+/* --- ЗАГРУЗЧИК --- */
 #splash-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: var(--md-sys-color-background);
@@ -45,6 +46,7 @@ body {
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--md-sys-color-primary), #eebcff); width: 0%; border-radius: 10px; box-shadow: 0 0 25px var(--md-sys-color-primary); animation: loadBar 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 @keyframes loadBar { 0% { width: 0%; } 20% { width: 25%; } 50% { width: 60%; } 100% { width: 100%; } }
 
+/* --- UI --- */
 .app-container { display: flex; height: 100%; width: 100%; }
 .glass, .sidebar { 
     background: var(--glass-bg); 
@@ -88,8 +90,8 @@ body {
 #content-area.fade-out { opacity: 0; transform: translateY(10px); }
 .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; align-content: start; }
 
-/* --- КАРТОЧКИ (Общий стиль) --- */
-.mod-card, .setting-card, .big-panel {
+/* --- ОБЩИЕ КАРТОЧКИ --- */
+.mod-card, .method-card-new, .big-panel {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 24px;
@@ -98,7 +100,7 @@ body {
     position: relative;
     box-shadow: var(--glass-shadow);
 }
-.mod-card:hover, .setting-card:hover, .big-panel:hover {
+.mod-card:hover, .method-card-new:hover, .big-panel:hover {
     transform: translateY(-4px);
     border-color: var(--glass-hover-border);
     background: var(--glass-hover-bg);
@@ -117,21 +119,8 @@ body {
 .install-btn:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(208, 188, 255, 0.3); }
 .install-btn:active { transform: scale(0.98); }
 
-/* Специфика настроек */
-.settings-container { display: flex; flex-direction: column; gap: 16px; max-width: 800px; margin: 0 auto; width: 100%; }
-.setting-card { padding: 24px; display: flex; align-items: center; justify-content: space-between; }
-.setting-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--md-sys-color-on-surface); }
-.setting-info p { font-size: 14px; color: var(--md-sys-color-outline); line-height: 1.4; }
-.switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #36343b; border-radius: 32px; border: 2px solid #938f99; transition: .3s; }
-.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 6px; bottom: 6px; background-color: #938f99; border-radius: 50%; transition: .3s; }
-input:checked + .slider { background-color: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); }
-input:checked + .slider:before { transform: translateX(20px); background-color: var(--md-sys-color-on-primary); width: 24px; height: 24px; bottom: 2px; left: 2px; }
-
-/* --- АВТОРЫ И О ПРОГРАММЕ (FULL FILL) --- */
-.about-page-container {
-    /* Растягиваем контейнер на всю доступную ширину и высоту */
+/* --- ГЛОБАЛЬНЫЙ КОНТЕЙНЕР (FULL FILL) --- */
+.full-height-container {
     width: 100%;
     height: 100%;
     display: flex;
@@ -139,22 +128,65 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     gap: 24px; 
 }
 
-.big-panel {
-    padding: 32px;
-    display: flex;
-    flex-direction: column;
-}
-
-.authors-panel {
-    flex-shrink: 0; /* Не сжимаем верхнюю панель */
-}
-
-.app-info-panel {
-    flex-grow: 1; /* Растягиваем нижнюю панель на всё свободное место до самого низа */
-    margin-bottom: 0;
-}
+.big-panel { padding: 32px; display: flex; flex-direction: column; }
+.shrink-panel { flex-shrink: 0; }
+.grow-panel { flex-grow: 1; margin-bottom: 0; }
 
 .panel-title { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--md-sys-color-outline); margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+/* --- СТРАНИЦА МЕТОДОВ --- */
+.methods-grid { display: flex; flex-direction: column; gap: 16px; flex-shrink: 0; }
+
+.method-card-new {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: 0.2s ease;
+}
+
+/* Активный метод - подсветка */
+.active-method {
+    background: rgba(208, 188, 255, 0.08); /* Легкий фиолетовый фон */
+    border-color: var(--md-sys-color-primary);
+}
+
+.method-icon {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--md-sys-color-primary);
+}
+.method-icon span { font-size: 24px; }
+
+.method-content { flex-grow: 1; }
+.method-content h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: #fff; }
+.method-content p { font-size: 13px; color: var(--md-sys-color-outline); }
+
+/* Справка по методам */
+.methods-info-list { display: flex; flex-direction: column; gap: 20px; }
+.info-item { display: flex; flex-direction: column; gap: 8px; }
+.info-badge {
+    display: inline-block;
+    padding: 4px 10px; border-radius: 8px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    align-self: flex-start;
+}
+.badge-auto { background: rgba(208, 188, 255, 0.2); color: var(--md-sys-color-primary); }
+.badge-sdls { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
+.badge-nosdls { background: rgba(255, 82, 82, 0.2); color: #ff5252; }
+.info-item p { font-size: 14px; line-height: 1.5; color: #ccc; }
+
+/* Тумблеры */
+.switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #36343b; border-radius: 32px; border: 2px solid #938f99; transition: .3s; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 6px; bottom: 6px; background-color: #938f99; border-radius: 50%; transition: .3s; }
+input:checked + .slider { background-color: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); }
+input:checked + .slider:before { transform: translateX(20px); background-color: var(--md-sys-color-on-primary); width: 24px; height: 24px; bottom: 2px; left: 2px; }
+
+/* --- АВТОРЫ --- */
 .authors-list { display: flex; flex-direction: column; gap: 24px; }
 .author-row { display: flex; align-items: flex-start; gap: 24px; }
 .author-avatar-wrapper { min-width: 64px; height: 64px; position: relative; }
