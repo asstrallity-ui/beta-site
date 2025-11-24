@@ -20,8 +20,10 @@ window.addEventListener('pywebviewready', function() {
     checkEnvironment();
 });
 
+// БАЗОВЫЕ ССЫЛКИ
 const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
+const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json'; // Твой новый файл
 
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
@@ -75,65 +77,79 @@ function handleTabChange(tab) {
             renderInstallMethods();
         } else if (tab === 'authors') {
             title.innerText = 'Информация';
-            
-            // ССЫЛКИ НА АВАТАРКИ (ПРОВЕРЬ ПУТИ!)
-            // Я предположил, что Refuzo это DorTep, раз моды от него
-            const refuzoAvatar = 'https://rh-archive.ru/mods_files_github/DorTep/AV/avatar.jpg'; 
-            const asstrallityAvatar = 'https://rh-archive.ru/mods_files_github/Asstrallity/AV/avatar.jpg';
-
-            contentArea.innerHTML = `
-                <div class="about-page-container">
-                    
-                    <div class="big-panel">
-                        <h2 class="panel-title">Команда проекта</h2>
-                        <div class="authors-list">
-                            
-                            <!-- Refuzo -->
-                            <div class="author-row">
-                                <div class="author-avatar-wrapper">
-                                    <img src="${refuzoAvatar}" alt="Refuzo" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                                    <div class="author-avatar-placeholder" style="background-color: #ffb74d; display: none;">R</div>
-                                </div>
-                                <div class="author-details">
-                                    <h3>Refuzo (DorTep)</h3>
-                                    <span class="role">Founder / Lead Modder</span>
-                                    <p>Основной мододел танкового дерьма. Живёт и спит в этой параше более 6 лет. Знает о структуре файлов игры больше, чем сами разработчики.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="divider"></div>
-
-                            <!-- Asstrallity -->
-                            <div class="author-row">
-                                <div class="author-avatar-wrapper">
-                                    <img src="${asstrallityAvatar}" alt="Asstrallity" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                                    <div class="author-avatar-placeholder" style="background-color: #d0bcff; display: none;">A</div>
-                                </div>
-                                <div class="author-details">
-                                    <h3>ASSTRALLITY</h3>
-                                    <span class="role">Developer / UI/UX</span>
-                                    <p>Левая или правая рука и половина извилин в ебанутой черепушке. Тоже чёт может :3. Отвечает за то, чтобы эта программа выглядела не как говно.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="big-panel">
-                        <h2 class="panel-title">О приложении</h2>
-                        <div class="app-details">
-                            <span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span>
-                            <p class="app-desc">
-                                Автоматический установщик модов для Tanks Blitz. Поддерживает Steam DLC System (sDLS) и безопасную установку без поломки клиента игры.
-                            </p>
-                            <p class="app-credits">Powered by Python, PyWebView & Pure Hate.</p>
-                        </div>
-                    </div>
-
-                </div>
-            `;
+            loadAuthors(); // Теперь грузим авторов из JSON
         }
         requestAnimationFrame(() => { contentArea.classList.remove('fade-out'); });
     }, 250); 
+}
+
+// --- ЛОГИКА ЗАГРУЗКИ АВТОРОВ ---
+async function loadAuthors() {
+    contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
+    
+    try {
+        const response = await fetch(REPO_AUTHORS_URL);
+        if (!response.ok) throw new Error('Authors file not found');
+        const authors = await response.json();
+        
+        let authorsListHtml = '';
+        
+        authors.forEach((author, index) => {
+            // Обработка ссылки на аватар
+            let avatarUrl = author.avatar || "";
+            if (avatarUrl && !avatarUrl.startsWith('http')) { avatarUrl = REPO_BASE_URL + avatarUrl; }
+            
+            // Первая буква для заглушки
+            const firstLetter = author.name ? author.name.charAt(0).toUpperCase() : "?";
+            // Случайный цвет для заглушки (просто для красоты)
+            const colors = ['#ffb74d', '#d0bcff', '#4caf50', '#64b5f6'];
+            const bgColor = colors[index % colors.length];
+
+            authorsListHtml += `
+                <div class="author-row">
+                    <div class="author-avatar-wrapper">
+                        <img src="${avatarUrl}" alt="${author.name}" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="author-avatar-placeholder" style="background-color: ${bgColor}; display: none;">${firstLetter}</div>
+                    </div>
+                    <div class="author-details">
+                        <h3>${author.name}</h3>
+                        <span class="role">${author.role}</span>
+                        <p>${author.bio}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Добавляем разделитель, если это не последний автор
+            if (index < authors.length - 1) {
+                authorsListHtml += `<div class="divider"></div>`;
+            }
+        });
+
+        contentArea.innerHTML = `
+            <div class="about-page-container">
+                <div class="big-panel">
+                    <h2 class="panel-title">Команда проекта</h2>
+                    <div class="authors-list">
+                        ${authorsListHtml}
+                    </div>
+                </div>
+
+                <div class="big-panel">
+                    <h2 class="panel-title">О приложении</h2>
+                    <div class="app-details">
+                        <span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span>
+                        <p class="app-desc">
+                            Автоматический установщик модов для Tanks Blitz. Поддерживает Steam DLC System (sDLS) и безопасную установку без поломки клиента игры.
+                        </p>
+                        <p class="app-credits">Powered by Python, PyWebView & Pure Hate.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+    } catch (error) {
+        contentArea.innerHTML = `<p style="color:#ff5252; text-align:center;">Ошибка загрузки списка авторов.<br>${error.message}</p>`;
+    }
 }
 
 function renderInstallMethods() {
