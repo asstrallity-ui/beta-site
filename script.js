@@ -1,21 +1,21 @@
-// ВАЖНО: Убедитесь, что на хостинге rh-archive.ru настроены CORS заголовки!
-// Иначе сайт на GitHub не сможет скачать JSON с вашего хостинга.
-
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
+    
+    // Анимация скрытия загрузочного экрана
     setTimeout(() => { 
         splash.classList.add('fade-out'); 
     }, 2600); 
     
     loadMods(); 
+    
+    // Проверка среды через 1 секунду (чтобы pywebview успел прогрузиться)
     setTimeout(checkEnvironment, 1000);
 });
 
-// Ссылка на папку на GitHub (используется как запасной вариант для старых относительных путей)
-const REPO_BASE_URL = 'https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/';
-
-// НОВАЯ ССЫЛКА НА ВАШ MODS.JSON НА REG.RU
-const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
+// ССЫЛКИ (Раз ты сменил хостинг, убедись, что тут стоят актуальные ссылки)
+// Если у тебя свой сервер, замени REPO_BASE_URL на путь к папке с файлами
+const REPO_BASE_URL = 'https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/'; 
+const REPO_JSON_URL = REPO_BASE_URL + 'mods.json';
 
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
@@ -32,10 +32,21 @@ const progressPercent = document.getElementById('progress-percent');
 let currentInstallMethod = 'auto'; 
 let isAppEnvironment = false;
 
+// ГЛАВНАЯ ФУНКЦИЯ ПРОВЕРКИ
 function checkEnvironment() {
+    // Если объект pywebview существует, значит мы внутри EXE
     if (window.pywebview) {
         isAppEnvironment = true;
-        document.querySelectorAll('.install-btn').forEach(btn => btn.disabled = false);
+        
+        // Находим все кнопки установки
+        const buttons = document.querySelectorAll('.install-btn');
+        
+        buttons.forEach(btn => {
+            // Разблокируем кнопку
+            btn.disabled = false;
+            // МЕНЯЕМ ТЕКСТ НА "УСТАНОВИТЬ"
+            btn.innerHTML = '<span class="material-symbols-outlined">download</span> Установить';
+        });
     }
 }
 
@@ -144,18 +155,27 @@ function renderInstallMethods() {
     const noSdlsToggle = document.getElementById('toggle-nosdls');
 
     autoToggle.addEventListener('change', () => { 
-        if (autoToggle.checked) { sdlsToggle.checked = false; noSdlsToggle.checked = false; currentInstallMethod = 'auto'; } 
-        else { autoToggle.checked = true; }
+        if (autoToggle.checked) { 
+            sdlsToggle.checked = false; 
+            noSdlsToggle.checked = false; 
+            currentInstallMethod = 'auto'; 
+        } else { autoToggle.checked = true; }
     });
 
     sdlsToggle.addEventListener('change', () => { 
-        if (sdlsToggle.checked) { autoToggle.checked = false; noSdlsToggle.checked = false; currentInstallMethod = 'sdls'; } 
-        else { sdlsToggle.checked = true; }
+        if (sdlsToggle.checked) { 
+            autoToggle.checked = false; 
+            noSdlsToggle.checked = false; 
+            currentInstallMethod = 'sdls'; 
+        } else { sdlsToggle.checked = true; }
     });
 
     noSdlsToggle.addEventListener('change', () => { 
-        if (noSdlsToggle.checked) { autoToggle.checked = false; sdlsToggle.checked = false; currentInstallMethod = 'no_sdls'; } 
-        else { noSdlsToggle.checked = true; }
+        if (noSdlsToggle.checked) { 
+            autoToggle.checked = false; 
+            sdlsToggle.checked = false; 
+            currentInstallMethod = 'no_sdls'; 
+        } else { noSdlsToggle.checked = true; }
     });
 }
 
@@ -174,30 +194,41 @@ async function loadMods() {
 function renderMods(mods) {
     contentArea.innerHTML = '';
     mods.forEach(mod => {
+        // Обработка пути к файлу
         let rawUrl = mod.file || mod.file_url || mod.url || "";
         let fullUrl = rawUrl;
-        // Если ссылка не начинается с http, считаем её относительной и лепим к GitHub (для старых модов)
         if (rawUrl && !rawUrl.startsWith('http')) { fullUrl = REPO_BASE_URL + rawUrl; }
         
         const imageUrl = mod.image || "https://via.placeholder.com/400x220/111/fff?text=No+Image";
-        
         const card = document.createElement('div');
         card.className = 'mod-card';
         
-        const btnText = isAppEnvironment ? 'Установить' : 'Доступно в приложении';
+        // По умолчанию (для веба) кнопка отключена и пишет "Доступно в приложении"
+        // Функция checkEnvironment потом это исправит, если мы в EXE
+        let btnText = 'Доступно в приложении';
+        let disabledAttr = 'disabled';
+
+        // Если вдруг JS определил среду мгновенно (редко, но бывает)
+        if (isAppEnvironment) {
+            btnText = 'Установить';
+            disabledAttr = '';
+        }
         
         card.innerHTML = `
             <img src="${imageUrl}" class="card-image" alt="${mod.name}">
             <div class="card-content">
                 <h3 class="card-title">${mod.name || "Без названия"}</h3>
                 <p class="card-desc">${mod.description || ""}</p>
-                <button class="install-btn" onclick="startInstallProcess('${mod.id}', '${mod.name}', '${fullUrl}')">
+                <button class="install-btn" ${disabledAttr} onclick="startInstallProcess('${mod.id}', '${mod.name}', '${fullUrl}')">
                     <span class="material-symbols-outlined">download</span> ${btnText}
                 </button>
             </div>
         `;
         contentArea.appendChild(card);
     });
+    
+    // Вызываем проверку еще раз сразу после рендера, на случай если API уже готов
+    checkEnvironment();
 }
 
 function startInstallProcess(id, name, url) {
