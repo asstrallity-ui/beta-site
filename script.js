@@ -4,14 +4,28 @@ document.addEventListener('DOMContentLoaded', () => {
         splash.classList.add('fade-out'); 
     }, 2600); 
     
+    // Запускаем загрузку
     loadMods(); 
-    setTimeout(checkEnvironment, 1000);
+    
+    // Запускаем "долбежку" проверки среды (на случай медленного старта Python)
+    // Проверяем каждые 100мс в течение 5 секунд
+    let attempts = 0;
+    const interval = setInterval(() => {
+        attempts++;
+        if (window.pywebview || attempts > 50) {
+            checkEnvironment();
+            if (window.pywebview) clearInterval(interval); // Если нашли - перестаем долбить
+        }
+    }, 100);
 });
 
-// Ссылка на папку на GitHub (используется как запасной вариант для старых относительных путей в JSON)
-const REPO_BASE_URL = 'https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/';
+// Слушатель спец. события от PyWebView (самый надежный метод)
+window.addEventListener('pywebviewready', function() {
+    checkEnvironment();
+});
 
-// НОВАЯ ССЫЛКА НА ВАШ MODS.JSON НА REG.RU
+// ССЫЛКИ
+const REPO_BASE_URL = 'https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/';
 const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
 
 const contentArea = document.getElementById('content-area');
@@ -29,14 +43,19 @@ const progressPercent = document.getElementById('progress-percent');
 let currentInstallMethod = 'auto'; 
 let isAppEnvironment = false;
 
+// ФУНКЦИЯ ВКЛЮЧЕНИЯ КНОПОК
 function checkEnvironment() {
     if (window.pywebview) {
         isAppEnvironment = true;
-        // Разблокируем все кнопки
-        document.querySelectorAll('.install-btn').forEach(btn => {
+        console.log("Environment detected: APP MODE");
+        
+        const buttons = document.querySelectorAll('.install-btn');
+        buttons.forEach(btn => {
             btn.disabled = false;
-            // Меняем текст кнопки на "Установить"
-            btn.innerHTML = '<span class="material-symbols-outlined">download</span> Установить';
+            // Принудительно обновляем текст, если он еще старый
+            if (btn.innerText.includes("Доступно")) {
+                btn.innerHTML = '<span class="material-symbols-outlined">download</span> Установить';
+            }
         });
     }
 }
@@ -67,7 +86,6 @@ function handleTabChange(tab) {
             title.innerText = 'Авторы';
             contentArea.innerHTML = `
                 <div class="authors-container">
-                    <!-- REFUZO -->
                     <div class="author-card">
                         <div class="author-header">
                             <div class="author-avatar" style="background-color: #ffb74d;">R</div>
@@ -81,8 +99,6 @@ function handleTabChange(tab) {
                             Знает о структуре файлов игры больше, чем сами разработчики.
                         </p>
                     </div>
-
-                    <!-- ASSTRALLITY -->
                     <div class="author-card">
                         <div class="author-header">
                             <div class="author-avatar" style="background-color: #d0bcff;">A</div>
@@ -116,7 +132,6 @@ function renderInstallMethods() {
                     <span class="slider"></span>
                 </label>
             </div>
-
             <div class="setting-card">
                 <div class="setting-info">
                     <h3>sDLS Метод (Ручной)</h3>
@@ -127,7 +142,6 @@ function renderInstallMethods() {
                     <span class="slider"></span>
                 </label>
             </div>
-
             <div class="setting-card">
                 <div class="setting-info">
                     <h3>Стандартный метод (No-SDLS)</h3>
@@ -145,20 +159,9 @@ function renderInstallMethods() {
     const sdlsToggle = document.getElementById('toggle-sdls');
     const noSdlsToggle = document.getElementById('toggle-nosdls');
 
-    autoToggle.addEventListener('change', () => { 
-        if (autoToggle.checked) { sdlsToggle.checked = false; noSdlsToggle.checked = false; currentInstallMethod = 'auto'; } 
-        else { autoToggle.checked = true; }
-    });
-
-    sdlsToggle.addEventListener('change', () => { 
-        if (sdlsToggle.checked) { autoToggle.checked = false; noSdlsToggle.checked = false; currentInstallMethod = 'sdls'; } 
-        else { sdlsToggle.checked = true; }
-    });
-
-    noSdlsToggle.addEventListener('change', () => { 
-        if (noSdlsToggle.checked) { autoToggle.checked = false; sdlsToggle.checked = false; currentInstallMethod = 'no_sdls'; } 
-        else { noSdlsToggle.checked = true; }
-    });
+    autoToggle.addEventListener('change', () => { if (autoToggle.checked) { sdlsToggle.checked = false; noSdlsToggle.checked = false; currentInstallMethod = 'auto'; } else { autoToggle.checked = true; } });
+    sdlsToggle.addEventListener('change', () => { if (sdlsToggle.checked) { autoToggle.checked = false; noSdlsToggle.checked = false; currentInstallMethod = 'sdls'; } else { sdlsToggle.checked = true; } });
+    noSdlsToggle.addEventListener('change', () => { if (noSdlsToggle.checked) { autoToggle.checked = false; sdlsToggle.checked = false; currentInstallMethod = 'no_sdls'; } else { noSdlsToggle.checked = true; } });
 }
 
 async function loadMods() {
@@ -176,26 +179,22 @@ async function loadMods() {
 
 function renderMods(mods) {
     contentArea.innerHTML = '';
+    
+    // Еще раз проверяем среду перед рендером, вдруг Python уже готов
+    if (window.pywebview) isAppEnvironment = true;
+
     mods.forEach(mod => {
         let rawUrl = mod.file || mod.file_url || mod.url || "";
         let fullUrl = rawUrl;
-        
-        // Если ссылка относительная (не начинается с http), используем GitHub как базу
         if (rawUrl && !rawUrl.startsWith('http')) { fullUrl = REPO_BASE_URL + rawUrl; }
         
         const imageUrl = mod.image || "https://via.placeholder.com/400x220/111/fff?text=No+Image";
         const card = document.createElement('div');
         card.className = 'mod-card';
         
-        // Изначальное состояние кнопки (для браузера)
-        let btnText = 'Доступно в приложении';
-        let disabledAttr = 'disabled';
-
-        // Если среда уже определена как EXE (повторная перерисовка)
-        if (isAppEnvironment) {
-            btnText = 'Установить';
-            disabledAttr = '';
-        }
+        // Если среда уже определена как приложение - ставим кнопку активной СРАЗУ
+        const btnText = isAppEnvironment ? 'Установить' : 'Доступно в приложении';
+        const disabledAttr = isAppEnvironment ? '' : 'disabled';
         
         card.innerHTML = `
             <img src="${imageUrl}" class="card-image" alt="${mod.name}">
@@ -210,13 +209,13 @@ function renderMods(mods) {
         contentArea.appendChild(card);
     });
     
-    // Запускаем проверку среды еще раз сразу после рендера
+    // И еще раз вызываем проверку после рендера, чтобы обновить кнопки, если Python проснулся во время рендера
     checkEnvironment();
 }
 
 function startInstallProcess(id, name, url) {
     if (!window.pywebview) {
-        // Если вдруг кнопка была активна в браузере
+        // Если вдруг нажали в браузере
         installView.classList.add('view-hidden');
         successView.classList.add('view-hidden');
         errorView.classList.remove('view-hidden');
