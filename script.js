@@ -1,3 +1,6 @@
+// ВАЖНО: Убедитесь, что на хостинге rh-archive.ru настроены CORS заголовки!
+// Иначе сайт на GitHub не сможет скачать JSON с вашего хостинга.
+
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
     setTimeout(() => { 
@@ -8,8 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(checkEnvironment, 1000);
 });
 
+// Ссылка на папку на GitHub (используется как запасной вариант для старых относительных путей)
 const REPO_BASE_URL = 'https://raw.githubusercontent.com/asstrallity-ui/Tanks_Blitz_Mods_Files/main/';
-const REPO_JSON_URL = REPO_BASE_URL + 'mods.json';
+
+// НОВАЯ ССЫЛКА НА ВАШ MODS.JSON НА REG.RU
+const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
 
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
@@ -170,8 +176,11 @@ function renderMods(mods) {
     mods.forEach(mod => {
         let rawUrl = mod.file || mod.file_url || mod.url || "";
         let fullUrl = rawUrl;
+        // Если ссылка не начинается с http, считаем её относительной и лепим к GitHub (для старых модов)
         if (rawUrl && !rawUrl.startsWith('http')) { fullUrl = REPO_BASE_URL + rawUrl; }
+        
         const imageUrl = mod.image || "https://via.placeholder.com/400x220/111/fff?text=No+Image";
+        
         const card = document.createElement('div');
         card.className = 'mod-card';
         
