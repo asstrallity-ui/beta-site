@@ -28,7 +28,6 @@ body {
                       radial-gradient(circle at bottom left, #181a25 0%, transparent 40%); 
 }
 
-/* --- ЗАГРУЗЧИК --- */
 #splash-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: var(--md-sys-color-background);
@@ -46,7 +45,6 @@ body {
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--md-sys-color-primary), #eebcff); width: 0%; border-radius: 10px; box-shadow: 0 0 25px var(--md-sys-color-primary); animation: loadBar 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 @keyframes loadBar { 0% { width: 0%; } 20% { width: 25%; } 50% { width: 60%; } 100% { width: 100%; } }
 
-/* --- UI --- */
 .app-container { display: flex; height: 100%; width: 100%; }
 .glass, .sidebar { 
     background: var(--glass-bg); 
@@ -145,9 +143,8 @@ body {
     transition: 0.2s ease;
 }
 
-/* Активный метод - подсветка */
 .active-method {
-    background: rgba(208, 188, 255, 0.08); /* Легкий фиолетовый фон */
+    background: rgba(208, 188, 255, 0.08);
     border-color: var(--md-sys-color-primary);
 }
 
@@ -164,19 +161,21 @@ body {
 .method-content h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: #fff; }
 .method-content p { font-size: 13px; color: var(--md-sys-color-outline); }
 
-/* Справка по методам */
-.methods-info-list { display: flex; flex-direction: column; gap: 20px; }
-.info-item { display: flex; flex-direction: column; gap: 8px; }
+/* Справка по методам (FIXED BADGES) */
+.methods-info-list { display: flex; flex-direction: column; gap: 20px; margin-top: 8px; }
+.info-item { display: flex; flex-direction: column; gap: 10px; }
+
 .info-badge {
-    display: inline-block;
-    padding: 4px 10px; border-radius: 8px;
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    align-self: flex-start;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    align-self: flex-start; line-height: 1; min-width: 100px; text-align: center;
 }
-.badge-auto { background: rgba(208, 188, 255, 0.2); color: var(--md-sys-color-primary); }
-.badge-sdls { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
-.badge-nosdls { background: rgba(255, 82, 82, 0.2); color: #ff5252; }
-.info-item p { font-size: 14px; line-height: 1.5; color: #ccc; }
+.badge-auto { background: rgba(208, 188, 255, 0.15); color: #d0bcff; border: 1px solid rgba(208, 188, 255, 0.3); }
+.badge-sdls { background: rgba(76, 175, 80, 0.15); color: #81c784; border: 1px solid rgba(76, 175, 80, 0.3); }
+.badge-nosdls { background: rgba(255, 82, 82, 0.15); color: #ff8a80; border: 1px solid rgba(255, 82, 82, 0.3); }
+
+.info-item p { font-size: 13px; line-height: 1.5; color: #c4c7c5; margin: 0; }
 
 /* Тумблеры */
 .switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; }
