@@ -3,7 +3,7 @@ const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
 const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
 
-// --- DOM ЭЛЕМЕНТЫ ---
+// --- ЭЛЕМЕНТЫ DOM ---
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
 const modal = document.getElementById('progress-modal');
@@ -23,26 +23,35 @@ let isAppEnvironment = false;
 // --- ИНИЦИАЛИЗАЦИЯ ---
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
+    
     const savedColor = localStorage.getItem('accentColor');
-    if (savedColor) applyAccentColor(savedColor);
-    else applyAccentColor('#d0bcff');
+    if (savedColor) {
+        applyAccentColor(savedColor);
+    } else {
+        applyAccentColor('#d0bcff');
+    }
 
-    setTimeout(() => splash.classList.add('fade-out'), 2600); 
+    setTimeout(() => { 
+        splash.classList.add('fade-out'); 
+    }, 2600); 
+    
+    loadMods(); 
     
     let attempts = 0;
     const interval = setInterval(() => {
         attempts++;
         if (window.pywebview || attempts > 50) {
             checkEnvironment();
-            loadMods(); // Грузим моды только после проверки среды
             if (window.pywebview) clearInterval(interval);
         }
     }, 100);
 });
 
-window.addEventListener('pywebviewready', checkEnvironment);
+window.addEventListener('pywebviewready', function() {
+    checkEnvironment();
+});
 
-// --- ТЕМА И НАСТРОЙКИ ---
+// --- ФУНКЦИИ ТЕМЫ ---
 function hexToRgb(hex) {
     hex = hex.replace('#', '');
     let bigint = parseInt(hex, 16);
@@ -62,26 +71,36 @@ function applyAccentColor(color) {
 
 function renderSettings() {
     let currentColor = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim();
+    
     contentArea.innerHTML = `
         <div class="full-height-container">
             <div class="big-panel grow-panel">
                 <h2 class="panel-title">Персонализация</h2>
+                
                 <div class="color-picker-container">
                     <div class="color-preview-wrapper">
                         <input type="color" id="accent-color-input" value="${currentColor}">
                         <div class="color-preview-icon" style="background-color: ${currentColor};"></div>
                     </div>
-                    <div class="color-info"><h3>Акцентный цвет</h3><p>Выберите основной цвет интерфейса.</p></div>
+                    
+                    <div class="color-info">
+                        <h3>Акцентный цвет</h3>
+                        <p>Выберите основной цвет интерфейса. Он применится ко всем элементам.</p>
+                    </div>
                 </div>
+
                 <div class="divider" style="margin: 24px 0;"></div>
+
                 <button class="reset-theme-btn" onclick="resetTheme()">
                     <span class="material-symbols-outlined">restart_alt</span> Сбросить тему
                 </button>
             </div>
-        </div>`;
-    
+        </div>
+    `;
+
     const colorInput = document.getElementById('accent-color-input');
     const previewIcon = document.querySelector('.color-preview-icon');
+
     if (colorInput) {
         colorInput.addEventListener('input', (e) => {
             const newColor = e.target.value;
@@ -93,14 +112,24 @@ function renderSettings() {
 }
 
 window.resetTheme = function() {
-    applyAccentColor('#d0bcff');
+    const defaultColor = '#d0bcff';
+    applyAccentColor(defaultColor);
     localStorage.removeItem('accentColor');
     renderSettings();
 }
 
 // --- НАВИГАЦИЯ ---
 function checkEnvironment() {
-    if (window.pywebview) isAppEnvironment = true;
+    if (window.pywebview) {
+        isAppEnvironment = true;
+        const buttons = document.querySelectorAll('.install-btn');
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            if (btn.innerText.includes("Доступно")) {
+                btn.innerHTML = '<span class="material-symbols-outlined">download</span> Установить';
+            }
+        });
+    }
 }
 
 navItems.forEach(item => {
@@ -117,6 +146,7 @@ function handleTabChange(tab) {
         const title = document.getElementById('page-title');
         contentArea.innerHTML = '';
         contentArea.className = ''; 
+
         if (tab === 'mods') {
             title.innerText = 'Каталог модификаций';
             contentArea.classList.add('content-grid');
@@ -131,15 +161,154 @@ function handleTabChange(tab) {
             title.innerText = 'Настройки темы';
             renderSettings();
         }
-        requestAnimationFrame(() => contentArea.classList.remove('fade-out'));
+        requestAnimationFrame(() => { contentArea.classList.remove('fade-out'); });
     }, 250); 
 }
 
-// --- ЗАГРУЗКА КОНТЕНТА ---
+// --- ЗАГРУЗКА ДАННЫХ (АВТОРЫ) ---
+async function loadAuthors() {
+    contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
+    try {
+        const response = await fetch(REPO_AUTHORS_URL);
+        if (!response.ok) throw new Error('Authors file not found');
+        const authors = await response.json();
+        
+        let authorsListHtml = '';
+        authors.forEach((author, index) => {
+            let avatarUrl = author.avatar || "";
+            if (avatarUrl && !avatarUrl.startsWith('http')) { avatarUrl = REPO_BASE_URL + avatarUrl; }
+            const firstLetter = author.name ? author.name.charAt(0).toUpperCase() : "?";
+            
+            authorsListHtml += `
+                <div class="author-row">
+                    <div class="author-avatar-wrapper">
+                        <img src="${avatarUrl}" alt="${author.name}" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="author-avatar-placeholder" style="background-color: rgba(var(--md-sys-color-primary-rgb), 0.2); color: var(--md-sys-color-primary); display: none;">${firstLetter}</div>
+                    </div>
+                    <div class="author-details">
+                        <h3>${author.name}</h3>
+                        <span class="role">${author.role}</span>
+                        <p>${author.bio || ""}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        contentArea.innerHTML = `
+            <div class="about-page-container">
+                <div class="big-panel authors-panel">
+                    <h2 class="panel-title">Команда проекта</h2>
+                    <div class="authors-list">${authorsListHtml}</div>
+                </div>
+                
+                <div class="big-panel app-info-panel">
+                    <h2 class="panel-title">О приложении</h2>
+                    <div class="app-details">
+                        <div class="app-header-row">
+                            <span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span>
+                            <span style="font-size: 12px; color: #666;">Build: 2025.11.25</span>
+                        </div>
+                        <div class="app-description-block">
+                            <p class="app-desc-text">Это универсальный лаунчер-загрузчик модов в игру <strong>Tanks Blitz</strong>.</p>
+                            <ul class="app-features-list-small">
+                                <li>Учитывает <strong>sDLS</strong> (Steam DLC System)</li>
+                                <li>Поддерживает обычные обновления (Standard Update)</li>
+                                <li>Автоматические бэкапы (Auto-Backup)</li>
+                            </ul>
+                            <p class="app-desc-text" style="margin-top: 12px;">
+                                Содержит в себе актуальные моды, созданные: 
+                                <span style="color: #ffb74d; font-weight: 600;">Refuzo</span> + <span style="color: var(--md-sys-color-primary); font-weight: 600;">ASSTRALLITY</span>.
+                            </p>
+                        </div>
+                        <div style="flex-grow: 1;"></div>
+                        <div class="app-footer-row">
+                            <p class="app-credits">(C) Launcher 2025 | Mod loader</p>
+                            <p class="app-credits" style="opacity: 0.5;">Powered by Python, PyWebView & Pure Hate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        contentArea.innerHTML = `<p style="color:#ff5252; text-align:center;">Ошибка загрузки списка авторов.<br>${error.message}</p>`;
+    }
+}
+
+// --- ЗАГРУЗКА КОНТЕНТА (МЕТОДЫ) ---
+function renderInstallMethods() {
+    contentArea.innerHTML = `
+        <div class="full-height-container">
+            <div class="methods-grid">
+                <!-- AUTO -->
+                <div class="method-card-new ${currentInstallMethod === 'auto' ? 'active-method' : ''}" id="card-auto">
+                    <div class="method-icon"><span class="material-symbols-outlined">smart_toy</span></div>
+                    <div class="method-content"><h3>Автоматически</h3><p>Сам найдет папку packs</p></div>
+                    <label class="switch"><input type="checkbox" id="toggle-auto" ${currentInstallMethod === 'auto' ? 'checked' : ''}><span class="slider"></span></label>
+                </div>
+                <!-- sDLS -->
+                <div class="method-card-new ${currentInstallMethod === 'sdls' ? 'active-method' : ''}" id="card-sdls">
+                    <div class="method-icon"><span class="material-symbols-outlined">folder_zip</span></div>
+                    <div class="method-content"><h3>sDLS Метод</h3><p>Ручной режим (Documents)</p></div>
+                    <label class="switch"><input type="checkbox" id="toggle-sdls" ${currentInstallMethod === 'sdls' ? 'checked' : ''}><span class="slider"></span></label>
+                </div>
+                <!-- No-SDLS -->
+                <div class="method-card-new ${currentInstallMethod === 'no_sdls' ? 'active-method' : ''}" id="card-nosdls">
+                    <div class="method-icon"><span class="material-symbols-outlined">folder_open</span></div>
+                    <div class="method-content"><h3>Стандартный (No-SDLS)</h3><p>Прямая замена файлов</p></div>
+                    <label class="switch"><input type="checkbox" id="toggle-nosdls" ${currentInstallMethod === 'no_sdls' ? 'checked' : ''}><span class="slider"></span></label>
+                </div>
+            </div>
+
+            <div class="big-panel grow-panel">
+                <h2 class="panel-title">Справка по методам</h2>
+                <div class="methods-info-list">
+                    <div class="info-item">
+                        <div class="info-content"><span class="dash">—</span><p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p></div>
+                        <span class="info-badge badge-auto">Автоматически</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="info-item">
+                        <div class="info-content"><span class="dash">—</span><p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p></div>
+                        <span class="info-badge badge-sdls">sDLS Метод</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="info-item">
+                        <div class="info-content"><span class="dash">—</span><p>Тоже самое что и второй, только при условии что это обычная обнова :3</p></div>
+                        <span class="info-badge badge-nosdls">Стандартный</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const autoToggle = document.getElementById('toggle-auto');
+    const sdlsToggle = document.getElementById('toggle-sdls');
+    const noSdlsToggle = document.getElementById('toggle-nosdls');
+    const cardAuto = document.getElementById('card-auto');
+    const cardSdls = document.getElementById('card-sdls');
+    const cardNosdls = document.getElementById('card-nosdls');
+
+    function updateVisuals(method) {
+        currentInstallMethod = method;
+        cardAuto.classList.remove('active-method');
+        cardSdls.classList.remove('active-method');
+        cardNosdls.classList.remove('active-method');
+        if (method === 'auto') cardAuto.classList.add('active-method');
+        if (method === 'sdls') cardSdls.classList.add('active-method');
+        if (method === 'no_sdls') cardNosdls.classList.add('active-method');
+    }
+
+    autoToggle.addEventListener('change', () => { if (autoToggle.checked) { sdlsToggle.checked = false; noSdlsToggle.checked = false; updateVisuals('auto'); } else { autoToggle.checked = true; } });
+    sdlsToggle.addEventListener('change', () => { if (sdlsToggle.checked) { autoToggle.checked = false; noSdlsToggle.checked = false; updateVisuals('sdls'); } else { sdlsToggle.checked = true; } });
+    noSdlsToggle.addEventListener('change', () => { if (noSdlsToggle.checked) { autoToggle.checked = false; sdlsToggle.checked = false; updateVisuals('no_sdls'); } else { noSdlsToggle.checked = true; } });
+}
+
+// --- ЗАГРУЗКА МОДОВ ---
 async function loadMods() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div><p>Загрузка списка...</p></div>`;
     try {
         const response = await fetch(REPO_JSON_URL);
+        if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
         const mods = await response.json();
 
         // Проверка установленных модов
@@ -152,17 +321,19 @@ async function loadMods() {
 
         renderMods(mods, installedList);
     } catch (error) {
-        contentArea.innerHTML = `<p style="color:#ff5252; text-align:center;">Ошибка загрузки.<br>${error.message}</p>`;
+        contentArea.innerHTML = `<p style="color:#ff5252; text-align:center;">Не удалось загрузить список модов.<br>${error.message}<br>Проверьте CORS на сервере.</p>`;
     }
 }
 
 function renderMods(mods, installedList) {
     contentArea.innerHTML = '';
+    if (window.pywebview) isAppEnvironment = true;
+
     mods.forEach(mod => {
         let fileUrl = mod.file || "";
-        if (fileUrl && !fileUrl.startsWith('http')) fileUrl = REPO_BASE_URL + fileUrl;
+        if (fileUrl && !fileUrl.startsWith('http')) { fileUrl = REPO_BASE_URL + fileUrl; }
         let imageUrl = mod.image || "";
-        if (imageUrl && !imageUrl.startsWith('http')) imageUrl = REPO_BASE_URL + imageUrl;
+        if (imageUrl && !imageUrl.startsWith('http')) { imageUrl = REPO_BASE_URL + imageUrl; }
         if (!imageUrl) imageUrl = "https://via.placeholder.com/400x220/111/fff?text=No+Image";
 
         const isInstalled = installedList.includes(mod.id);
@@ -185,85 +356,28 @@ function renderMods(mods, installedList) {
                 <button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="startInstallProcess('${mod.id}', '${mod.name}', '${fileUrl}')">
                     <span class="material-symbols-outlined">${btnIcon}</span> ${btnText}
                 </button>
-            </div>`;
+            </div>
+        `;
         contentArea.appendChild(card);
     });
+    checkEnvironment();
 }
 
-async function loadAuthors() {
-    contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
-    try {
-        const response = await fetch(REPO_AUTHORS_URL);
-        const authors = await response.json();
-        let authorsListHtml = '';
-        authors.forEach((author, index) => {
-            let avatarUrl = author.avatar || "";
-            if (avatarUrl && !avatarUrl.startsWith('http')) avatarUrl = REPO_BASE_URL + avatarUrl;
-            const firstLetter = author.name ? author.name.charAt(0).toUpperCase() : "?";
-            authorsListHtml += `
-                <div class="author-row">
-                    <div class="author-avatar-wrapper">
-                        <img src="${avatarUrl}" alt="${author.name}" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="author-avatar-placeholder" style="background-color: rgba(var(--md-sys-color-primary-rgb), 0.2); color: var(--md-sys-color-primary); display: none;">${firstLetter}</div>
-                    </div>
-                    <div class="author-details"><h3>${author.name}</h3><span class="role">${author.role}</span><p>${author.bio}</p></div>
-                </div>`;
-            if (index < authors.length - 1) authorsListHtml += `<div class="divider"></div>`;
-        });
-        contentArea.innerHTML = `
-            <div class="about-page-container">
-                <div class="big-panel authors-panel"><h2 class="panel-title">Команда проекта</h2><div class="authors-list">${authorsListHtml}</div></div>
-                <div class="big-panel app-info-panel"><h2 class="panel-title">О приложении</h2>
-                    <div class="app-details">
-                        <div class="app-header-row"><span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span><span style="font-size: 12px; color: #666;">Build: 2025.11.25</span></div>
-                        <div class="app-description-block">
-                            <p class="app-desc-text">Это универсальный лаунчер-загрузчик модов в игру <strong>Tanks Blitz</strong>.</p>
-                            <ul class="app-features-list-small"><li>Учитывает <strong>sDLS</strong> (Steam DLC System)</li><li>Поддерживает обычные обновления</li><li>Автоматические бэкапы</li></ul>
-                            <p class="app-desc-text" style="margin-top: 12px;">Содержит в себе актуальные моды, созданные: <span style="color: #ffb74d; font-weight: 600;">Refuzo</span> + <span style="color: var(--md-sys-color-primary); font-weight: 600;">ASSTRALLITY</span>.</p>
-                        </div>
-                        <div style="flex-grow: 1;"></div>
-                        <div class="app-footer-row"><p class="app-credits">(C) Launcher 2025 | Mod loader</p><p class="app-credits" style="opacity: 0.5;">Powered by Python, PyWebView & Pure Hate</p></div>
-                    </div>
-                </div>
-            </div>`;
-    } catch (error) { contentArea.innerHTML = `<p style="color:#ff5252; text-align:center;">Ошибка.<br>${error.message}</p>`; }
-}
-
-function renderInstallMethods() {
-    contentArea.innerHTML = `
-        <div class="full-height-container">
-            <div class="methods-grid">
-                <div class="method-card-new ${currentInstallMethod === 'auto' ? 'active-method' : ''}" id="card-auto"><div class="method-icon"><span class="material-symbols-outlined">smart_toy</span></div><div class="method-content"><h3>Автоматически</h3><p>Сам найдет папку packs</p></div><label class="switch"><input type="checkbox" id="toggle-auto" ${currentInstallMethod === 'auto' ? 'checked' : ''}><span class="slider"></span></label></div>
-                <div class="method-card-new ${currentInstallMethod === 'sdls' ? 'active-method' : ''}" id="card-sdls"><div class="method-icon"><span class="material-symbols-outlined">folder_zip</span></div><div class="method-content"><h3>sDLS Метод</h3><p>Ручной режим (Documents)</p></div><label class="switch"><input type="checkbox" id="toggle-sdls" ${currentInstallMethod === 'sdls' ? 'checked' : ''}><span class="slider"></span></label></div>
-                <div class="method-card-new ${currentInstallMethod === 'no_sdls' ? 'active-method' : ''}" id="card-nosdls"><div class="method-icon"><span class="material-symbols-outlined">folder_open</span></div><div class="method-content"><h3>Стандартный (No-SDLS)</h3><p>Прямая замена файлов</p></div><label class="switch"><input type="checkbox" id="toggle-nosdls" ${currentInstallMethod === 'no_sdls' ? 'checked' : ''}><span class="slider"></span></label></div>
-            </div>
-            <div class="big-panel grow-panel"><h2 class="panel-title">Справка по методам</h2><div class="methods-info-list"><div class="info-item"><div class="info-content"><span class="dash">—</span><p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p></div><span class="info-badge badge-auto">Автоматически</span></div><div class="divider"></div><div class="info-item"><div class="info-content"><span class="dash">—</span><p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p></div><span class="info-badge badge-sdls">sDLS Метод</span></div><div class="divider"></div><div class="info-item"><div class="info-content"><span class="dash">—</span><p>Тоже самое что и второй, только при условии что это обычная обнова :3</p></div><span class="info-badge badge-nosdls">Стандартный</span></div></div></div>
-        </div>`;
-    
-    const autoToggle = document.getElementById('toggle-auto');
-    const sdlsToggle = document.getElementById('toggle-sdls');
-    const noSdlsToggle = document.getElementById('toggle-nosdls');
-    const cardAuto = document.getElementById('card-auto');
-    const cardSdls = document.getElementById('card-sdls');
-    const cardNosdls = document.getElementById('card-nosdls');
-
-    function updateVisuals(method) {
-        currentInstallMethod = method;
-        cardAuto.classList.remove('active-method'); cardSdls.classList.remove('active-method'); cardNosdls.classList.remove('active-method');
-        if (method === 'auto') cardAuto.classList.add('active-method');
-        if (method === 'sdls') cardSdls.classList.add('active-method');
-        if (method === 'no_sdls') cardNosdls.classList.add('active-method');
-    }
-    autoToggle.addEventListener('change', () => { if(autoToggle.checked){sdlsToggle.checked=false;noSdlsToggle.checked=false;updateVisuals('auto');}else autoToggle.checked=true; });
-    sdlsToggle.addEventListener('change', () => { if(sdlsToggle.checked){autoToggle.checked=false;noSdlsToggle.checked=false;updateVisuals('sdls');}else sdlsToggle.checked=true; });
-    noSdlsToggle.addEventListener('change', () => { if(noSdlsToggle.checked){autoToggle.checked=false;sdlsToggle.checked=false;updateVisuals('no_sdls');}else noSdlsToggle.checked=true; });
-}
-
-// --- УСТАНОВКА И ОТМЕНА ---
+// --- УСТАНОВКА ---
 function startInstallProcess(id, name, url) {
-    if (!window.pywebview) return;
-    if (!url || url === "undefined") { alert("Ошибка: Ссылка на файл не найдена!"); return; }
-    
+    if (!window.pywebview) {
+        installView.classList.add('view-hidden');
+        successView.classList.add('view-hidden');
+        errorView.classList.remove('view-hidden');
+        errorMessage.innerText = "Установка доступна только в приложении LOADER ASTR!";
+        modal.classList.remove('hidden');
+        setTimeout(closeModal, 3000);
+        return;
+    }
+    if (!url || url === "undefined") {
+        alert("Ошибка: Ссылка на файл не найдена!");
+        return;
+    }
     installView.classList.remove('view-hidden');
     successView.classList.add('view-hidden');
     errorView.classList.add('view-hidden');
@@ -272,7 +386,6 @@ function startInstallProcess(id, name, url) {
     modalTitle.innerText = name;
     modalStatus.innerText = "Подключение...";
     modal.classList.remove('hidden');
-    
     window.pywebview.api.install_mod(id, url, currentInstallMethod);
 }
 
@@ -293,10 +406,14 @@ window.finishInstall = function(success, message) {
     installView.classList.add('view-hidden');
     if (success) {
         successView.classList.remove('view-hidden');
-        setTimeout(() => { closeModal(); loadMods(); }, 2500); 
+        setTimeout(() => {
+            closeModal();
+            loadMods(); 
+        }, 2500); 
     } else {
-        if (message === "Canceled") closeModal();
-        else {
+        if (message === "Canceled") {
+            closeModal();
+        } else {
             errorView.classList.remove('view-hidden');
             errorMessage.innerText = message;
             setTimeout(closeModal, 3500);
