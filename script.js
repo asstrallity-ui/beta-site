@@ -82,7 +82,6 @@ function handleTabChange(tab) {
     }, 250); 
 }
 
-// --- АВТОРЫ ---
 async function loadAuthors() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
     try {
@@ -136,7 +135,6 @@ async function loadAuthors() {
     }
 }
 
-// --- МЕТОДЫ УСТАНОВКИ ---
 function renderInstallMethods() {
     contentArea.innerHTML = `
         <div class="full-height-container">
@@ -182,24 +180,39 @@ function renderInstallMethods() {
                 </div>
             </div>
 
-            <!-- СПРАВКА (Растянута) -->
+            <!-- СПРАВКА (ОБНОВЛЕННАЯ) -->
             <div class="big-panel grow-panel">
                 <h2 class="panel-title">Справка по методам</h2>
                 <div class="methods-info-list">
+                    
                     <div class="info-item">
+                        <div class="info-content">
+                            <span class="dash">—</span>
+                            <p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p>
+                        </div>
                         <span class="info-badge badge-auto">Автоматически</span>
-                        <p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p>
                     </div>
+                    
                     <div class="divider"></div>
+                    
                     <div class="info-item">
+                        <div class="info-content">
+                            <span class="dash">—</span>
+                            <p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p>
+                        </div>
                         <span class="info-badge badge-sdls">sDLS Метод</span>
-                        <p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p>
                     </div>
+                    
                     <div class="divider"></div>
+                    
                     <div class="info-item">
+                        <div class="info-content">
+                            <span class="dash">—</span>
+                            <p>Тоже самое что и второй, только при условии что это обычная обнова :3</p>
+                        </div>
                         <span class="info-badge badge-nosdls">Стандартный</span>
-                        <p>Тоже самое что и второй, только при условии что это обычная обнова :3</p>
                     </div>
+
                 </div>
             </div>
 
