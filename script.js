@@ -20,6 +20,7 @@ window.addEventListener('pywebviewready', function() {
     checkEnvironment();
 });
 
+// КОНФИГ ССЫЛОК
 const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
 const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
@@ -82,6 +83,7 @@ function handleTabChange(tab) {
     }, 250); 
 }
 
+// --- ЗАГРУЗКА АВТОРОВ И О ПРИЛОЖЕНИИ ---
 async function loadAuthors() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
     try {
@@ -114,18 +116,47 @@ async function loadAuthors() {
         });
 
         contentArea.innerHTML = `
-            <div class="full-height-container">
-                <div class="big-panel shrink-panel">
+            <div class="about-page-container">
+                <!-- ВЕРХНЯЯ ПАНЕЛЬ (АВТОРЫ) -->
+                <div class="big-panel authors-panel">
                     <h2 class="panel-title">Команда проекта</h2>
-                    <div class="authors-list">${authorsListHtml}</div>
+                    <div class="authors-list">
+                        ${authorsListHtml}
+                    </div>
                 </div>
-                <div class="big-panel grow-panel">
+
+                <!-- НИЖНЯЯ ПАНЕЛЬ (О ПРИЛОЖЕНИИ) -->
+                <div class="big-panel app-info-panel">
                     <h2 class="panel-title">О приложении</h2>
                     <div class="app-details">
-                        <span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span>
-                        <p class="app-desc">Автоматический установщик модов для Tanks Blitz. Поддерживает Steam DLC System (sDLS) и безопасную установку без поломки клиента игры.</p>
+                        
+                        <div class="app-header-row">
+                            <span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span>
+                            <span style="font-size: 12px; color: #666;">Build: 2025.11.25</span>
+                        </div>
+
+                        <div class="app-description-block">
+                            <p class="app-desc-text">
+                                Это универсальный лаунчер-загрузчик модов в игру <strong>Tanks Blitz</strong>.
+                            </p>
+                            <ul class="app-features-list-small">
+                                <li>Учитывает <strong>sDLS</strong> (Steam DLC System)</li>
+                                <li>Поддерживает обычные обновления (Standard Update)</li>
+                                <li>Автоматические бэкапы (Auto-Backup)</li>
+                            </ul>
+                            <p class="app-desc-text" style="margin-top: 12px;">
+                                Содержит в себе актуальные моды, которые были созданы двумя людьми: 
+                                <span style="color: #ffb74d; font-weight: 600;">Refuzo</span> + <span style="color: #d0bcff; font-weight: 600;">ASSTRALLITY</span>.
+                            </p>
+                        </div>
+
+                        <!-- Распорка -->
                         <div style="flex-grow: 1;"></div>
-                        <p class="app-credits">(С) Launcher 2025 | Mod loader</p>
+                        
+                        <div class="app-footer-row">
+                            <p class="app-credits">(C) Launcher 2025 | Mod loader</p>
+                            <p class="app-credits" style="opacity: 0.5;">Powered by Python, PyWebView & Pure Hate</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -135,6 +166,7 @@ async function loadAuthors() {
     }
 }
 
+// --- МЕТОДЫ УСТАНОВКИ ---
 function renderInstallMethods() {
     contentArea.innerHTML = `
         <div class="full-height-container">
@@ -337,4 +369,3 @@ window.finishInstall = function(success, message) {
 function closeModal() {
     modal.classList.add('hidden');
 }
-
