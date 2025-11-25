@@ -221,13 +221,13 @@ function openRepairModal() {
 }
 
 async function restoreMod(id, name) {
-    if (!confirm(`Восстановить оригинальные файлы для "${name}"?`)) return;
+    // Процесс восстановления без confirm
     repairModal.classList.add('hidden');
     installView.classList.remove('view-hidden'); successView.classList.add('view-hidden'); errorView.classList.add('view-hidden');
-    progressBar.style.width = "100%"; progressPercent.innerText = ""; modalTitle.innerText = "Восстановление..."; modalStatus.innerText = "Копирование файлов...";
+    progressBar.style.width = "100%"; progressPercent.innerText = ""; modalTitle.innerText = "Восстановление..."; modalStatus.innerText = "Обработка...";
     modal.classList.remove('hidden');
     const res = await window.pywebview.api.restore_mod(id);
-    if (res.success) finishInstall(true, "Восстановлено"); else finishInstall(false, res.message);
+    if (res.success) finishInstall(true, res.message); else finishInstall(false, res.message);
 }
 
 if(repairCloseBtn) repairCloseBtn.addEventListener('click', () => repairModal.classList.add('hidden'));
