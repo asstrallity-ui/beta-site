@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
+    
+    // Загружаем сохраненный цвет сразу
+    const savedColor = localStorage.getItem('accentColor');
+    if (savedColor) {
+        applyAccentColor(savedColor);
+    }
+
     setTimeout(() => { 
         splash.classList.add('fade-out'); 
     }, 2600); 
@@ -20,7 +27,6 @@ window.addEventListener('pywebviewready', function() {
     checkEnvironment();
 });
 
-// КОНФИГ ССЫЛОК
 const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
 const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
@@ -78,12 +84,67 @@ function handleTabChange(tab) {
         } else if (tab === 'authors') {
             title.innerText = 'Информация';
             loadAuthors();
+        } else if (tab === 'settings') {
+            title.innerText = 'Настройки темы';
+            renderSettings();
         }
         requestAnimationFrame(() => { contentArea.classList.remove('fade-out'); });
     }, 250); 
 }
 
-// --- ЗАГРУЗКА АВТОРОВ И О ПРИЛОЖЕНИИ ---
+// --- ФУНКЦИИ СМЕНЫ ЦВЕТА ---
+function applyAccentColor(color) {
+    document.documentElement.style.setProperty('--md-sys-color-primary', color);
+    // Вычисляем более темный цвет для on-primary (для текста на кнопках)
+    // Здесь упрощенно, можно использовать tinycolor или просто фиксированный темный
+    document.documentElement.style.setProperty('--md-sys-color-on-primary', '#1e1e1e'); 
+}
+
+function renderSettings() {
+    const currentColor = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim();
+    
+    contentArea.innerHTML = `
+        <div class="full-height-container">
+            <div class="big-panel">
+                <h2 class="panel-title">Персонализация</h2>
+                
+                <div class="color-picker-container">
+                    <div class="color-preview" id="color-preview" style="background-color: ${currentColor};"></div>
+                    <div class="color-info">
+                        <h3>Акцентный цвет</h3>
+                        <p>Выберите основной цвет интерфейса</p>
+                    </div>
+                    <input type="color" id="accent-color-input" value="${currentColor}">
+                </div>
+
+                <div class="divider" style="margin: 24px 0;"></div>
+
+                <button class="reset-theme-btn" onclick="resetTheme()">
+                    <span class="material-symbols-outlined">restart_alt</span> Сбросить тему
+                </button>
+            </div>
+        </div>
+    `;
+
+    const colorInput = document.getElementById('accent-color-input');
+    const colorPreview = document.getElementById('color-preview');
+
+    colorInput.addEventListener('input', (e) => {
+        const newColor = e.target.value;
+        colorPreview.style.backgroundColor = newColor;
+        applyAccentColor(newColor);
+        localStorage.setItem('accentColor', newColor);
+    });
+}
+
+window.resetTheme = function() {
+    const defaultColor = '#d0bcff';
+    applyAccentColor(defaultColor);
+    localStorage.removeItem('accentColor');
+    renderSettings(); // Перерисовать, чтобы обновить инпут
+}
+
+// --- ОСТАЛЬНОЙ КОД (АВТОРЫ, МОДЫ, МЕТОДЫ) ---
 async function loadAuthors() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
     try {
@@ -117,42 +178,27 @@ async function loadAuthors() {
 
         contentArea.innerHTML = `
             <div class="about-page-container">
-                <!-- ВЕРХНЯЯ ПАНЕЛЬ (АВТОРЫ) -->
                 <div class="big-panel authors-panel">
                     <h2 class="panel-title">Команда проекта</h2>
-                    <div class="authors-list">
-                        ${authorsListHtml}
-                    </div>
+                    <div class="authors-list">${authorsListHtml}</div>
                 </div>
-
-                <!-- НИЖНЯЯ ПАНЕЛЬ (О ПРИЛОЖЕНИИ) -->
                 <div class="big-panel app-info-panel">
                     <h2 class="panel-title">О приложении</h2>
                     <div class="app-details">
-                        
                         <div class="app-header-row">
                             <span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span>
                             <span style="font-size: 12px; color: #666;">Build: 2025.11.25</span>
                         </div>
-
                         <div class="app-description-block">
-                            <p class="app-desc-text">
-                                Это универсальный лаунчер-загрузчик модов в игру <strong>Tanks Blitz</strong>.
-                            </p>
+                            <p class="app-desc-text">Это универсальный лаунчер-загрузчик модов в игру <strong>Tanks Blitz</strong>.</p>
                             <ul class="app-features-list-small">
                                 <li>Учитывает <strong>sDLS</strong> (Steam DLC System)</li>
                                 <li>Поддерживает обычные обновления (Standard Update)</li>
                                 <li>Автоматические бэкапы (Auto-Backup)</li>
                             </ul>
-                            <p class="app-desc-text" style="margin-top: 12px;">
-                                Содержит в себе актуальные моды, которые были созданы двумя людьми: 
-                                <span style="color: #ffb74d; font-weight: 600;">Refuzo</span> + <span style="color: #d0bcff; font-weight: 600;">ASSTRALLITY</span>.
-                            </p>
+                            <p class="app-desc-text" style="margin-top: 12px;">Содержит в себе актуальные моды, которые были созданы двумя людьми: <span style="color: #ffb74d; font-weight: 600;">Refuzo</span> + <span style="color: var(--md-sys-color-primary); font-weight: 600;">ASSTRALLITY</span>.</p>
                         </div>
-
-                        <!-- Распорка -->
                         <div style="flex-grow: 1;"></div>
-                        
                         <div class="app-footer-row">
                             <p class="app-credits">(C) Launcher 2025 | Mod loader</p>
                             <p class="app-credits" style="opacity: 0.5;">Powered by Python, PyWebView & Pure Hate</p>
@@ -166,88 +212,45 @@ async function loadAuthors() {
     }
 }
 
-// --- МЕТОДЫ УСТАНОВКИ ---
 function renderInstallMethods() {
     contentArea.innerHTML = `
         <div class="full-height-container">
-            
             <div class="methods-grid">
-                <!-- AUTO -->
                 <div class="method-card-new ${currentInstallMethod === 'auto' ? 'active-method' : ''}" id="card-auto">
                     <div class="method-icon"><span class="material-symbols-outlined">smart_toy</span></div>
-                    <div class="method-content">
-                        <h3>Автоматически</h3>
-                        <p>Сам найдет папку packs</p>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-auto" ${currentInstallMethod === 'auto' ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
+                    <div class="method-content"><h3>Автоматически</h3><p>Сам найдет папку packs</p></div>
+                    <label class="switch"><input type="checkbox" id="toggle-auto" ${currentInstallMethod === 'auto' ? 'checked' : ''}><span class="slider"></span></label>
                 </div>
-
-                <!-- sDLS -->
                 <div class="method-card-new ${currentInstallMethod === 'sdls' ? 'active-method' : ''}" id="card-sdls">
                     <div class="method-icon"><span class="material-symbols-outlined">folder_zip</span></div>
-                    <div class="method-content">
-                        <h3>sDLS Метод</h3>
-                        <p>Ручной режим (Documents)</p>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-sdls" ${currentInstallMethod === 'sdls' ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
+                    <div class="method-content"><h3>sDLS Метод</h3><p>Ручной режим (Documents)</p></div>
+                    <label class="switch"><input type="checkbox" id="toggle-sdls" ${currentInstallMethod === 'sdls' ? 'checked' : ''}><span class="slider"></span></label>
                 </div>
-
-                <!-- No-SDLS -->
                 <div class="method-card-new ${currentInstallMethod === 'no_sdls' ? 'active-method' : ''}" id="card-nosdls">
                     <div class="method-icon"><span class="material-symbols-outlined">folder_open</span></div>
-                    <div class="method-content">
-                        <h3>Стандартный (No-SDLS)</h3>
-                        <p>Прямая замена файлов</p>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-nosdls" ${currentInstallMethod === 'no_sdls' ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
+                    <div class="method-content"><h3>Стандартный (No-SDLS)</h3><p>Прямая замена файлов</p></div>
+                    <label class="switch"><input type="checkbox" id="toggle-nosdls" ${currentInstallMethod === 'no_sdls' ? 'checked' : ''}><span class="slider"></span></label>
                 </div>
             </div>
-
-            <!-- СПРАВКА (ОБНОВЛЕННАЯ) -->
             <div class="big-panel grow-panel">
                 <h2 class="panel-title">Справка по методам</h2>
                 <div class="methods-info-list">
-                    
                     <div class="info-item">
-                        <div class="info-content">
-                            <span class="dash">—</span>
-                            <p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p>
-                        </div>
+                        <div class="info-content"><span class="dash">—</span><p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p></div>
                         <span class="info-badge badge-auto">Автоматически</span>
                     </div>
-                    
                     <div class="divider"></div>
-                    
                     <div class="info-item">
-                        <div class="info-content">
-                            <span class="dash">—</span>
-                            <p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p>
-                        </div>
+                        <div class="info-content"><span class="dash">—</span><p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p></div>
                         <span class="info-badge badge-sdls">sDLS Метод</span>
                     </div>
-                    
                     <div class="divider"></div>
-                    
                     <div class="info-item">
-                        <div class="info-content">
-                            <span class="dash">—</span>
-                            <p>Тоже самое что и второй, только при условии что это обычная обнова :3</p>
-                        </div>
+                        <div class="info-content"><span class="dash">—</span><p>Тоже самое что и второй, только при условии что это обычная обнова :3</p></div>
                         <span class="info-badge badge-nosdls">Стандартный</span>
                     </div>
-
                 </div>
             </div>
-
         </div>
     `;
 
