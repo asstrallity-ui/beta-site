@@ -65,7 +65,7 @@ function handleTabChange(tab) {
     setTimeout(() => {
         const title = document.getElementById('page-title');
         contentArea.innerHTML = '';
-        contentArea.className = ''; // Сброс классов
+        contentArea.className = ''; 
 
         if (tab === 'mods') {
             title.innerText = 'Каталог модификаций';
@@ -82,7 +82,7 @@ function handleTabChange(tab) {
     }, 250); 
 }
 
-// --- СТРАНИЦА АВТОРОВ ---
+// --- АВТОРЫ ---
 async function loadAuthors() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
     try {
@@ -136,14 +136,12 @@ async function loadAuthors() {
     }
 }
 
-// --- СТРАНИЦА МЕТОДОВ (ОБНОВЛЕНА) ---
+// --- МЕТОДЫ УСТАНОВКИ ---
 function renderInstallMethods() {
     contentArea.innerHTML = `
         <div class="full-height-container">
             
-            <!-- БЛОК ПЕРЕКЛЮЧАТЕЛЕЙ -->
             <div class="methods-grid">
-                
                 <!-- AUTO -->
                 <div class="method-card-new ${currentInstallMethod === 'auto' ? 'active-method' : ''}" id="card-auto">
                     <div class="method-icon"><span class="material-symbols-outlined">smart_toy</span></div>
@@ -182,10 +180,9 @@ function renderInstallMethods() {
                         <span class="slider"></span>
                     </label>
                 </div>
-
             </div>
 
-            <!-- БЛОК ИНФОРМАЦИИ (РАСТЯНУТ ВНИЗ) -->
+            <!-- СПРАВКА (Растянута) -->
             <div class="big-panel grow-panel">
                 <h2 class="panel-title">Справка по методам</h2>
                 <div class="methods-info-list">
@@ -218,37 +215,17 @@ function renderInstallMethods() {
 
     function updateVisuals(method) {
         currentInstallMethod = method;
-        // Сброс классов
         cardAuto.classList.remove('active-method');
         cardSdls.classList.remove('active-method');
         cardNosdls.classList.remove('active-method');
-        
-        // Установка классов
         if (method === 'auto') cardAuto.classList.add('active-method');
         if (method === 'sdls') cardSdls.classList.add('active-method');
         if (method === 'no_sdls') cardNosdls.classList.add('active-method');
     }
 
-    autoToggle.addEventListener('change', () => { 
-        if (autoToggle.checked) { 
-            sdlsToggle.checked = false; noSdlsToggle.checked = false; 
-            updateVisuals('auto');
-        } else { autoToggle.checked = true; }
-    });
-
-    sdlsToggle.addEventListener('change', () => { 
-        if (sdlsToggle.checked) { 
-            autoToggle.checked = false; noSdlsToggle.checked = false; 
-            updateVisuals('sdls');
-        } else { sdlsToggle.checked = true; }
-    });
-
-    noSdlsToggle.addEventListener('change', () => { 
-        if (noSdlsToggle.checked) { 
-            autoToggle.checked = false; sdlsToggle.checked = false; 
-            updateVisuals('no_sdls');
-        } else { noSdlsToggle.checked = true; }
-    });
+    autoToggle.addEventListener('change', () => { if (autoToggle.checked) { sdlsToggle.checked = false; noSdlsToggle.checked = false; updateVisuals('auto'); } else { autoToggle.checked = true; } });
+    sdlsToggle.addEventListener('change', () => { if (sdlsToggle.checked) { autoToggle.checked = false; noSdlsToggle.checked = false; updateVisuals('sdls'); } else { sdlsToggle.checked = true; } });
+    noSdlsToggle.addEventListener('change', () => { if (noSdlsToggle.checked) { autoToggle.checked = false; sdlsToggle.checked = false; updateVisuals('no_sdls'); } else { noSdlsToggle.checked = true; } });
 }
 
 async function loadMods() {
