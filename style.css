@@ -29,15 +29,21 @@ body {
     color: var(--md-sys-color-on-surface); 
     height: 100vh; 
     overflow: hidden; 
-    background-image: radial-gradient(circle at top right, #1f1b2e 0%, transparent 40%), 
-                      radial-gradient(circle at bottom left, #181a25 0%, transparent 40%); 
+    
+    /* ИЗМЕНЕННЫЙ ФОН: Градиент теперь зависит от основного цвета */
+    background-image: 
+        radial-gradient(circle at top right, rgba(var(--md-sys-color-primary-rgb), 0.08) 0%, transparent 40%), 
+        radial-gradient(circle at bottom left, rgba(var(--md-sys-color-primary-rgb), 0.05) 0%, transparent 40%); 
 }
 
 /* --- ЗАГРУЗЧИК --- */
 #splash-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: var(--md-sys-color-background);
-    background-image: radial-gradient(circle at top right, #2a2438 0%, transparent 50%), radial-gradient(circle at bottom left, #1e2030 0%, transparent 50%);
+    /* Фон сплэш-скрина тоже адаптируем */
+    background-image: 
+        radial-gradient(circle at top right, rgba(var(--md-sys-color-primary-rgb), 0.1) 0%, transparent 50%), 
+        radial-gradient(circle at bottom left, rgba(var(--md-sys-color-primary-rgb), 0.05) 0%, transparent 50%);
     z-index: 9999; display: flex; align-items: center; justify-content: center;
     transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
 }
@@ -134,7 +140,7 @@ body {
 .install-btn:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 .install-btn:active { transform: scale(0.98); }
 
-/* --- НАСТРОЙКИ ЦВЕТА --- */
+/* --- НАСТРОЙКИ ЦВЕТА (Color Picker) --- */
 .color-picker-container { display: flex; align-items: center; gap: 20px; padding: 10px 0; position: relative; }
 .color-preview-wrapper { position: relative; width: 48px; height: 48px; }
 .color-preview-icon { 
