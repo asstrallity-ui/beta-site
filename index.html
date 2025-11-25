@@ -81,9 +81,12 @@
     <div id="progress-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
         <div class="modal-content glass-panel">
-            <!-- Кнопка закрытия (отмены) -->
-            <span class="material-symbols-outlined close-modal" id="cancel-btn" onclick="cancelInstall()">close</span>
             
+            <!-- Кнопка закрытия / отмены -->
+            <div class="close-modal" onclick="cancelInstall()">
+                <span class="material-symbols-outlined">close</span>
+            </div>
+
             <div id="install-view">
                 <h3 id="install-title">Установка...</h3>
                 <div class="progress-container">
