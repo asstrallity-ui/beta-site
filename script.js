@@ -202,32 +202,45 @@ function renderMods(mods, installedIds, buyList) {
     });
 }
 
-// --- ОТКРЫТИЕ МОДАЛКИ ИНФО (СТРОГИЙ СТИЛЬ) ---
+// --- ОТКРЫТИЕ МОДАЛКИ ИНФО (ОБНОВЛЕННАЯ СТРУКТУРА) ---
 function openInfoModal(type, modId) {
-    const item = globalBuyList.find(b => b.id === modId);
-    if (!item) return;
+    const buyItem = globalBuyList.find(b => b.id === modId);
+    const modItem = globalModsList.find(m => m.id === modId);
+    
+    if (!buyItem || !modItem) return;
 
     infoModal.classList.remove('hidden');
-    infoActionBtn.className = 'modal-action-btn'; // Строгий стиль
+    infoActionBtn.className = 'modal-action-btn'; 
 
-    if (type === 'preorder') {
-        infoTitle.innerText = 'Предзаказ';
-        infoDesc.innerHTML = `
-            <p>Данный мод находится в раннем доступе.</p>
-            <p>${item.desc || "Свяжитесь с автором для получения доступа."}</p>
-            <div class="info-price-tag">${item.price || "По запросу"}</div>
-        `;
-        infoActionBtn.innerHTML = 'ЗАКАЗАТЬ <span class="material-symbols-outlined">telegram</span>';
-    } else {
-        infoTitle.innerText = 'Платный контент';
-        infoDesc.innerHTML = `
-            <p>Этот мод распространяется платно.</p>
-            <p>${item.desc || "Для покупки перейдите в Telegram автора."}</p>
-            <div class="info-price-tag">${item.price || "Цена договорная"}</div>
-        `;
-        infoActionBtn.innerHTML = 'КУПИТЬ <span class="material-symbols-outlined">shopping_cart</span>';
-    }
-    infoActionBtn.onclick = () => window.open(item.link, '_blank');
+    let statusTitle = type === 'preorder' ? 'Предзаказ' : 'Платный контент';
+    let btnText = type === 'preorder' ? 'ЗАКАЗАТЬ' : 'КУПИТЬ';
+    let btnIcon = type === 'preorder' ? 'schedule' : 'shopping_cart';
+
+    infoTitle.innerText = statusTitle;
+    
+    // Новая верстка внутри модалки
+    infoDesc.innerHTML = `
+        <div class="info-row">
+            <span class="info-label">Мод:</span>
+            <span class="info-value">${modItem.name}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Автор:</span>
+            <span class="info-value author-highlight">${modItem.author}</span>
+        </div>
+        
+        <div class="divider" style="margin: 16px 0;"></div>
+        
+        <p class="info-description">${buyItem.desc || "Описание недоступно."}</p>
+        
+        <div class="info-price-tag">${buyItem.price || "Цена договорная"}</div>
+    `;
+
+    infoActionBtn.innerHTML = `${btnText} <span class="material-symbols-outlined">${btnIcon}</span>`;
+    
+    infoActionBtn.onclick = () => {
+        if (buyItem.link) window.open(buyItem.link, '_blank');
+    };
 }
 
 if(infoCloseBtn) infoCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
