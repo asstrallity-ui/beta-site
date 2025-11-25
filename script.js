@@ -125,7 +125,7 @@ async function loadAuthors() {
                         <span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span>
                         <p class="app-desc">Автоматический установщик модов для Tanks Blitz. Поддерживает Steam DLC System (sDLS) и безопасную установку без поломки клиента игры.</p>
                         <div style="flex-grow: 1;"></div>
-                        <p class="app-credits">Powered by Python, PyWebView & Pure Hate.</p>
+                        <p class="app-credits">(С) Launcher 2025 | Mod loader</p>
                     </div>
                 </div>
             </div>
@@ -337,3 +337,4 @@ window.finishInstall = function(success, message) {
 function closeModal() {
     modal.classList.add('hidden');
 }
+
