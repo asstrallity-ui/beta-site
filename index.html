@@ -54,26 +54,14 @@
 
     <div id="progress-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <!-- КНОПКА ЗАКРЫТИЯ/ОТМЕНЫ -->
-            <button id="modal-close-btn" class="modal-close-icon">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-
+            <button id="modal-close-btn" class="modal-close-icon"><span class="material-symbols-outlined">close</span></button>
             <div id="install-view">
                 <h3 id="modal-title">Установка...</h3>
                 <div class="progress-container"><div id="progress-bar" class="progress-bar"></div></div>
                 <div class="progress-info-row"><p id="modal-status">Скачивание: 0 MB/s</p><span id="progress-percent">0%</span></div>
             </div>
-            <div id="success-view" class="view-hidden">
-                <span class="material-symbols-outlined success-icon">check_circle</span>
-                <h3>Готово!</h3>
-                <p class="error-text">Установка завершена успешно</p>
-            </div>
-            <div id="error-view" class="view-hidden">
-                <span class="material-symbols-outlined error-icon">error</span>
-                <h3>Ошибка</h3>
-                <p id="error-message" class="error-text">Что-то пошло не так</p>
-            </div>
+            <div id="success-view" class="view-hidden"><span class="material-symbols-outlined success-icon">check_circle</span><h3>Готово!</h3><p class="error-text">Установка завершена успешно</p></div>
+            <div id="error-view" class="view-hidden"><span class="material-symbols-outlined error-icon">error</span><h3>Ошибка</h3><p id="error-message" class="error-text">Что-то пошло не так</p></div>
         </div>
     </div>
 
