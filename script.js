@@ -1,6 +1,5 @@
 const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
 const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
-// Ссылка на файл покупок
 const REPO_BUY_URL = 'https://rh-archive.ru/mods_files_github/buy.json'; 
 const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 
@@ -8,7 +7,7 @@ const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
 
 // Модальные окна
-const modal = document.getElementById('progress-modal'); // Установка
+const modal = document.getElementById('progress-modal'); 
 const installView = document.getElementById('install-view');
 const successView = document.getElementById('success-view');
 const errorView = document.getElementById('error-view');
@@ -19,11 +18,11 @@ const modalStatus = document.getElementById('modal-status');
 const modalTitle = document.getElementById('modal-title');
 const modalCloseBtn = document.getElementById('modal-close-btn');
 
-const repairModal = document.getElementById('repair-modal'); // Ремонт
+const repairModal = document.getElementById('repair-modal'); 
 const repairList = document.getElementById('repair-list');
 const repairCloseBtn = document.getElementById('repair-close-btn');
 
-const infoModal = document.getElementById('info-modal'); // Инфо (Покупка/Предзаказ)
+const infoModal = document.getElementById('info-modal'); 
 const infoTitle = document.getElementById('info-modal-title');
 const infoDesc = document.getElementById('info-modal-desc');
 const infoActionBtn = document.getElementById('info-modal-action');
@@ -31,27 +30,31 @@ const infoCloseBtn = document.getElementById('info-close-btn');
 
 let currentInstallMethod = 'auto'; 
 let globalModsList = []; 
-let globalBuyList = []; // Список платных модов
+let globalBuyList = []; 
 let globalInstalledIds = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
     const savedColor = localStorage.getItem('accentColor');
     if (savedColor) applyAccentColor(savedColor); else applyAccentColor('#d0bcff');
-    setTimeout(() => splash.classList.add('fade-out'), 2600);
+    
+    setTimeout(() => {
+        if(splash) splash.classList.add('fade-out');
+    }, 2600);
     
     let attempts = 0;
     const interval = setInterval(() => {
         attempts++;
         if (window.pywebview || attempts > 50) {
             checkEnvironment();
-            loadMods(); // Загрузка всего
+            loadMods(); 
             if (window.pywebview) clearInterval(interval);
         }
     }, 100);
     
-    // Пинг
-    checkPing(); setInterval(checkPing, 5000);
+    // ЗАПУСК ПИНГА ТОЛЬКО ЗДЕСЬ, КОГДА DOM ГОТОВ
+    checkPing(); 
+    setInterval(checkPing, 5000);
 });
 
 window.addEventListener('pywebviewready', checkEnvironment);
@@ -60,6 +63,10 @@ window.addEventListener('pywebviewready', checkEnvironment);
 async function checkPing() {
     const pingText = document.getElementById('ping-text');
     const pingDot = document.getElementById('ping-dot');
+    
+    // Защита: если элементов нет, выходим
+    if (!pingText || !pingDot) return;
+
     const start = Date.now();
     try {
         await fetch(REPO_JSON_URL + '?t=' + start, { method: 'HEAD', cache: 'no-store' });
@@ -131,18 +138,17 @@ function handleTabChange(tab) {
     }, 250);
 }
 
-// --- ЗАГРУЗКА ДАННЫХ ---
+// --- ЗАГРУЗКА ---
 async function loadMods() {
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div><p>Загрузка каталога...</p></div>`;
     try {
-        // Грузим моды и buy.json параллельно
         const [modsResp, buyResp] = await Promise.all([
             fetch(REPO_JSON_URL),
-            fetch(REPO_BUY_URL).catch(() => ({ json: () => [] })) // Если buy.json нет, возвращаем пустой массив
+            fetch(REPO_BUY_URL).catch(() => ({ json: () => [] }))
         ]);
 
         globalModsList = await modsResp.json(); 
-        globalBuyList = await buyResp.json(); // Список покупок
+        globalBuyList = await buyResp.json();
 
         globalInstalledIds = [];
         if (window.pywebview) {
@@ -161,8 +167,6 @@ function renderMods(mods, installedIds, buyList) {
         if(!img) img = "https://via.placeholder.com/400x220/111/fff?text=No+Image";
         
         const isInst = installedIds.includes(mod.id);
-        
-        // Проверяем статус в buy.json
         const buyInfo = buyList.find(b => b.id === mod.id);
         
         let btnText = 'Установить';
@@ -171,12 +175,10 @@ function renderMods(mods, installedIds, buyList) {
         let isDisabled = false;
         let onClickAction = `startInstallProcess('${mod.id}', '${mod.name}', '${mod.file}')`;
 
-        // Логика кнопок
         if (buyInfo) {
-            // Платный или Предзаказ
             if (buyInfo.status === 'preorder') {
                 btnText = 'Предзаказ';
-                btnIcon = 'schedule'; // Иконка часов
+                btnIcon = 'schedule';
                 btnClass = 'install-btn btn-preorder';
                 onClickAction = `openInfoModal('preorder', '${mod.id}')`;
             } else {
@@ -186,7 +188,6 @@ function renderMods(mods, installedIds, buyList) {
                 onClickAction = `openInfoModal('paid', '${mod.id}')`;
             }
         } else {
-            // Бесплатный
             if (!window.pywebview) {
                 btnText = 'Доступно в приложении';
                 isDisabled = true;
@@ -214,49 +215,29 @@ function renderMods(mods, installedIds, buyList) {
     });
 }
 
-// --- МОДАЛЬНОЕ ОКНО ИНФОРМАЦИИ (BUY/PREORDER) ---
 function openInfoModal(type, modId) {
     const item = globalBuyList.find(b => b.id === modId);
     if (!item) return;
 
     infoModal.classList.remove('hidden');
-    
-    // Очистка классов кнопки
     infoActionBtn.className = 'info-modal-btn';
 
     if (type === 'preorder') {
         infoTitle.innerText = 'Ранний доступ';
-        infoDesc.innerHTML = `
-            <p class="info-status-text">Данный мод пока недоступен публично.</p>
-            <p>Закажите его у создателя и получите ранний доступ быстрее остальных.</p>
-            <div class="info-price-tag">${item.price || "По запросу"}</div>
-            <p class="info-sub">${item.desc || ""}</p>
-        `;
+        infoDesc.innerHTML = `<p class="info-status-text">Данный мод пока недоступен публично.</p><p>Закажите его у создателя.</p><div class="info-price-tag">${item.price || "По запросу"}</div><p class="info-sub">${item.desc || ""}</p>`;
         infoActionBtn.innerHTML = '<span>Заказать</span> <span class="material-symbols-outlined">telegram</span>';
         infoActionBtn.classList.add('btn-preorder-modal');
     } else {
         infoTitle.innerText = 'Платный мод';
-        infoDesc.innerHTML = `
-            <p class="info-status-text">Этот мод распространяется платно.</p>
-            <p>Приобретите его у автора напрямую.</p>
-            <div class="info-price-tag">${item.price || "Цена договорная"}</div>
-            <p class="info-sub">${item.desc || ""}</p>
-        `;
+        infoDesc.innerHTML = `<p class="info-status-text">Этот мод распространяется платно.</p><p>Приобретите его у автора.</p><div class="info-price-tag">${item.price || "Цена договорная"}</div><p class="info-sub">${item.desc || ""}</p>`;
         infoActionBtn.innerHTML = '<span>Купить</span> <span class="material-symbols-outlined">telegram</span>';
         infoActionBtn.classList.add('btn-paid-modal');
     }
-
-    // Привязка ссылки (открываем в браузере)
-    infoActionBtn.onclick = () => {
-        // window.open работает в pywebview как открытие в дефолтном браузере (обычно)
-        window.open(item.link, '_blank'); 
-    };
+    infoActionBtn.onclick = () => window.open(item.link, '_blank');
 }
 
 if(infoCloseBtn) infoCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
 
-
-// --- ОСТАЛЬНОЙ ФУНКЦИОНАЛ (Установка, Ремонт) ---
 function renderInstallMethods() {
     contentArea.innerHTML = `
         <div class="full-height-container">
