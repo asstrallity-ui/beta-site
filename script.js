@@ -5,6 +5,7 @@ const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
+
 const modal = document.getElementById('progress-modal');
 const installView = document.getElementById('install-view');
 const successView = document.getElementById('success-view');
@@ -15,6 +16,7 @@ const progressPercent = document.getElementById('progress-percent');
 const modalStatus = document.getElementById('modal-status');
 const modalTitle = document.getElementById('modal-title');
 const modalCloseBtn = document.getElementById('modal-close-btn');
+
 const repairModal = document.getElementById('repair-modal');
 const repairList = document.getElementById('repair-list');
 const repairCloseBtn = document.getElementById('repair-close-btn');
@@ -36,6 +38,11 @@ const updateLogP = document.getElementById('update-changelog');
 const btnStartUpdate = document.getElementById('btn-start-update');
 const btnSkipUpdate = document.getElementById('btn-skip-update');
 
+// GEO
+const btnTestGeo = document.getElementById('btn-test-geo');
+const geoModal = document.getElementById('geo-modal');
+const btnGeoFix = document.getElementById('btn-geo-fix');
+
 const toast = document.getElementById('toast-notification');
 
 let currentInstallMethod = 'auto';
@@ -45,15 +52,11 @@ let globalInstalledIds = [];
 let newUpdateUrl = "";
 
 document.addEventListener('DOMContentLoaded', () => {
-    createGeoModal(); // Инициализируем скрытое окно блокировки
-
     const savedColor = localStorage.getItem('accentColor');
-    if (savedColor) {
-        applyAccentColor(savedColor);
-    } else {
-        applyAccentColor('#d0bcff');
-    }
+    if (savedColor) applyAccentColor(savedColor);
+    else applyAccentColor('#d0bcff');
 
+    // Ждем pywebview
     let attempts = 0;
     const interval = setInterval(() => {
         attempts++;
@@ -70,13 +73,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('pywebviewready', checkEnvironment);
 
+// --- GEO CHECK FUNCTIONS ---
+async function checkGeo(test = false) {
+    if (!window.pywebview) return;
+    
+    try {
+        // Вызываем Python API: test=true форсирует "blocked"
+        const res = await window.pywebview.api.check_connection_status(test);
+        
+        if (res.status === 'blocked') {
+            // Показываем красное модальное окно
+            geoModal.classList.remove('hidden');
+            geoModal.classList.add('active');
+        } else {
+            if (test) {
+                showToast("Вы не в Украине (Тест OK)");
+            }
+        }
+    } catch (e) {
+        console.error("Geo check error:", e);
+    }
+}
+
+if (btnTestGeo) {
+    btnTestGeo.addEventListener('click', () => {
+        // При нажатии кнопки - запускаем с флагом TEST=TRUE
+        checkGeo(true);
+    });
+}
+
+if (btnGeoFix) {
+    btnGeoFix.addEventListener('click', async () => {
+        // Логика исправления: меняем "настройки" и перезагружаем
+        btnGeoFix.innerText = "Перезагрузка...";
+        btnGeoFix.disabled = true;
+        
+        localStorage.setItem('language', 'ru'); // Для примера сохраняем настройку
+        
+        if (window.pywebview) {
+            await window.pywebview.api.restart_app();
+        }
+    });
+}
+// ---------------------------
+
+function checkEnvironment() {
+    // Запускаем проверку ГЕО при старте (настоящую, test=false)
+    checkGeo(false);
+
+    if(window.pywebview) {
+        checkForUpdates(false);
+        // Get installed mods
+    }
+}
+
 function showToast(msg) {
     if(!toast) return;
     toast.innerText = msg;
     toast.classList.remove('hidden');
-    setTimeout(() => {
-        toast.classList.add('hidden');
-    }, 3000);
+    setTimeout(() => toast.classList.add('hidden'), 3000);
 }
 
 async function checkForUpdates(manual = false) {
@@ -88,7 +143,6 @@ async function checkForUpdates(manual = false) {
         const icon = btnCheckUpdates.querySelector('span');
         icon.style.animation = "spin 1s linear infinite";
     }
-
     try {
         const res = await window.pywebview.api.check_for_updates();
         if (res.available) {
@@ -110,24 +164,17 @@ async function checkForUpdates(manual = false) {
     }
 }
 
-if (btnCheckUpdates) {
-    btnCheckUpdates.addEventListener('click', () => checkForUpdates(true));
-}
+if (btnCheckUpdates) btnCheckUpdates.addEventListener('click', () => checkForUpdates(true));
 
 if (btnStartUpdate) {
     btnStartUpdate.addEventListener('click', () => {
-        btnStartUpdate.innerHTML = '<span class="material-symbols-outlined spin">sync</span> Скачивание...';
+        btnStartUpdate.innerHTML = '<span class="material-symbols-outlined spinner-sm">sync</span> Скачивание...';
         btnStartUpdate.disabled = true;
         btnSkipUpdate.style.display = 'none';
         window.pywebview.api.perform_update(newUpdateUrl);
     });
 }
-
-if (btnSkipUpdate) {
-    btnSkipUpdate.addEventListener('click', () => {
-        updateModal.classList.add('hidden');
-    });
-}
+if (btnSkipUpdate) btnSkipUpdate.addEventListener('click', () => updateModal.classList.add('hidden'));
 
 async function checkPing() {
     const pingText = document.getElementById('ping-text');
@@ -169,360 +216,127 @@ function renderSettings() {
     let col = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim();
     
     contentArea.innerHTML = `
-        <div class="full-height-container">
-            <div class="big-panel shrink-panel">
-                <div class="panel-title">НАСТРОЙКА ИНТЕРФЕЙСА</div>
-                
-                <div class="custom-color-picker">
-                    <div class="picker-header">
-                        <div class="current-color-preview" id="current-color-preview" style="background-color: ${col};"></div>
-                        <div class="picker-info">
-                            <h3>Акцентный цвет</h3>
-                            <p>Подбери цвет под свой вкус. По умолчанию — нежно‑лиловый.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="picker-controls">
-                        <label for="accent-hue-slider">Оттенок</label>
-                        <input type="range" id="accent-hue-slider" class="slider-hue" min="0" max="360" value="0">
-                        
-                        <div class="presets-grid">
-                            <div class="color-preset" style="background-color: #d0bcff;" data-color="#d0bcff"></div>
-                            <div class="color-preset" style="background-color: #ffb4ab;" data-color="#ffb4ab"></div>
-                            <div class="color-preset" style="background-color: #82d3e0;" data-color="#82d3e0"></div>
-                            <div class="color-preset" style="background-color: #aaddaa;" data-color="#aaddaa"></div>
-                            <div class="color-preset" style="background-color: #e6c9a8;" data-color="#e6c9a8"></div>
-                        </div>
-                    </div>
-
-                    <button class="reset-theme-btn" id="reset-theme-btn">
-                        <span class="material-symbols-outlined">restart_alt</span>
-                        Сбросить тему
-                    </button>
-
+    <div class="big-panel fade-in">
+        <div class="panel-title">Персонализация</div>
+        <div class="custom-color-picker">
+            <div class="picker-header">
+                <div class="current-color-preview" style="background-color: ${col}"></div>
+                <div class="picker-info">
+                    <h3>Акцентный цвет</h3>
+                    <p>Выберите основной цвет интерфейса</p>
+                </div>
+            </div>
+            <div class="picker-controls">
+                <label>Оттенок</label>
+                <input type="range" min="0" max="360" class="slider-hue" id="hue-slider">
+                <div class="presets-grid">
+                    <div class="color-preset" style="background:#d0bcff" onclick="updateColor('#d0bcff')"></div>
+                    <div class="color-preset" style="background:#ffb7b2" onclick="updateColor('#ffb7b2')"></div>
+                    <div class="color-preset" style="background:#b2fba5" onclick="updateColor('#b2fba5')"></div>
+                    <div class="color-preset" style="background:#a5eeff" onclick="updateColor('#a5eeff')"></div>
+                    <div class="color-preset" style="background:#fffda5" onclick="updateColor('#fffda5')"></div>
                 </div>
             </div>
         </div>
+        <button class="reset-theme-btn" onclick="updateColor('#d0bcff')">
+            <span class="material-symbols-outlined">restart_alt</span> Сбросить тему
+        </button>
+    </div>
     `;
-
-    const slider = document.getElementById('accent-hue-slider');
-    const preview = document.getElementById('current-color-preview');
-    const resetBtn = document.getElementById('reset-theme-btn');
-    const presets = document.querySelectorAll('.color-preset');
-
-    slider.addEventListener('input', (e) => {
-        const hue = e.target.value;
-        const color = `hsl(${hue}, 100%, 80%)`;
-        preview.style.backgroundColor = color;
-        document.documentElement.style.setProperty('--md-sys-color-primary', color);
-        applyAccentColor(color);
-        localStorage.setItem('accentColor', color);
-    });
-
-    presets.forEach(p => {
-        p.addEventListener('click', () => {
-            const c = p.getAttribute('data-color');
-            applyAccentColor(c);
-            preview.style.backgroundColor = c;
-            localStorage.setItem('accentColor', c);
+    
+    const slider = document.getElementById('hue-slider');
+    if(slider) {
+        slider.addEventListener('input', (e) => {
+            const hue = e.target.value;
+            const color = `hsl(${hue}, 100%, 80%)`;
+            updateColor(color);
         });
-    });
-
-    resetBtn.addEventListener('click', () => {
-        localStorage.removeItem('accentColor');
-        applyAccentColor('#d0bcff');
-        renderSettings(); 
-    });
-}
-
-function checkEnvironment() {
-    if (window.pywebview) {
-        const closeBtn = document.querySelector('.close-btn');
-        const minBtn = document.querySelector('.min-btn');
-        
-        if(closeBtn) closeBtn.addEventListener('click', () => window.pywebview.api.close());
-        if(minBtn) minBtn.addEventListener('click', () => window.pywebview.api.minimize());
-
-        // Disable install buttons if installing
-        window.pywebview.api.check_installed_mods(globalModsList).then(ids => {
-            globalInstalledIds = ids;
-            loadMods(false); 
-        });
-        checkForUpdates();
     }
 }
+window.updateColor = (c) => {
+    localStorage.setItem('accentColor', c);
+    applyAccentColor(c);
+    const p = document.querySelector('.current-color-preview');
+    if(p) p.style.backgroundColor = c;
+}
 
-navItems.forEach(item => {
-    item.addEventListener('click', () => {
-        navItems.forEach(n => n.classList.remove('active'));
-        item.classList.add('active');
-        const section = item.getAttribute('data-section');
+// --- NAVIGATION ---
+navItems.forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Если это кнопка теста, не переключаем вкладки
+        if (btn.id === 'btn-test-geo') return;
+
+        navItems.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
         
-        contentArea.classList.add('fade-out');
-        setTimeout(() => {
-            if (section === 'catalog') loadMods();
-            else if (section === 'settings') renderSettings();
-            else if (section === 'methods') renderMethodsPage(); 
-            else if (section === 'about') renderAboutPage();
-            contentArea.classList.remove('fade-out');
-        }, 250);
+        if(tab === 'home') loadMods();
+        else if(tab === 'installed') loadInstalled();
+        else if(tab === 'settings') renderSettings();
+        else if(tab === 'about') renderAbout();
     });
 });
 
-function renderMethodsPage() {
-    contentArea.innerHTML = `
-        <div class="full-height-container">
-            <div class="big-panel grow-panel">
-                <div class="panel-title">МЕТОДЫ УСТАНОВКИ</div>
-                <div class="methods-grid">
-                    
-                    <!-- Auto -->
-                    <div class="method-card-new ${currentInstallMethod==='auto'?'active-method':''}" onclick="setMethod('auto')">
-                        <div class="method-icon"><span class="material-symbols-outlined">smart_toy</span></div>
-                        <div class="method-content">
-                            <h3>Автоматический (Рекомендуется)</h3>
-                            <p>Сам найдет папку packs (Steam) или Data (LGC/WG)</p>
-                        </div>
-                        <div class="switch">
-                            <input type="radio" name="method" ${currentInstallMethod==='auto'?'checked':''}>
-                            <span class="slider"></span>
-                        </div>
-                    </div>
-
-                    <!-- SDLS -->
-                    <div class="method-card-new ${currentInstallMethod==='sdls'?'active-method':''}" onclick="setMethod('sdls')">
-                        <div class="method-icon"><span class="material-symbols-outlined">folder_special</span></div>
-                        <div class="method-content">
-                            <h3>Ручной режим (Documents)</h3>
-                            <p>Для Steam версии (папка packs)</p>
-                        </div>
-                        <div class="switch">
-                            <input type="radio" name="method" ${currentInstallMethod==='sdls'?'checked':''}>
-                            <span class="slider"></span>
-                        </div>
-                    </div>
-
-                    <!-- No SDLS -->
-                    <div class="method-card-new ${currentInstallMethod==='no_sdls'?'active-method':''}" onclick="setMethod('no_sdls')">
-                        <div class="method-icon"><span class="material-symbols-outlined">sd_card</span></div>
-                        <div class="method-content">
-                            <h3>Прямая замена файлов</h3>
-                            <p>Для LGC/WG версий (папка Data)</p>
-                        </div>
-                        <div class="switch">
-                            <input type="radio" name="method" ${currentInstallMethod==='no_sdls'?'checked':''}>
-                            <span class="slider"></span>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="methods-info-list">
-                    <div class="info-item">
-                        <div class="info-badge badge-auto">Auto</div>
-                        <div class="info-content">
-                            <div class="dash">-</div>
-                            <p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-badge badge-sdls">Steam</div>
-                        <div class="info-content">
-                            <div class="dash">-</div>
-                            <p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-badge badge-nosdls">Classic</div>
-                        <div class="info-content">
-                            <div class="dash">-</div>
-                            <p>Тоже самое что и второй, только при условии что это обычная обнова :3</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function setMethod(m) {
-    currentInstallMethod = m;
-    renderMethodsPage(); 
-}
-
-function renderAboutPage() {
-    contentArea.innerHTML = `
-        <div class="about-page-container">
-            <div class="big-panel shrink-panel">
-                <div class="panel-title">О ПРИЛОЖЕНИИ</div>
-                <div class="app-details">
-                    <div class="app-header-row">
-                        <div class="logo-icon-img" style="background:url('https://rh-archive.ru/mods_files_github/images/logo.png') no-repeat center/contain; width:48px; height:48px;"></div>
-                        <div style="display:flex; flex-direction:column;">
-                            <h2 style="font-size:24px; font-weight:700; letter-spacing:1px;">LOADER ASTR</h2>
-                            <span class="app-version-badge">BETA 1.0.0</span>
-                        </div>
-                    </div>
-                    <div class="app-description-block">
-                        <p class="app-desc-text">
-                            Это универсальный лаунчер-загрузчик модов в игру <strong>Tanks Blitz</strong>.
-                            Приложение разработано для упрощения процесса установки модификаций, 
-                            автоматического поиска путей игры и управления контентом.
-                        </p>
-                        <ul class="app-features-list-new">
-                            <li><strong>Автообновление:</strong> Лаунчер сам проверит наличие новой версии.</li>
-                            <li><strong>Умная установка:</strong> Поддержка Steam (packs) и LGC/WG (Data).</li>
-                            <li><strong>Безопасность:</strong> Бэкап заменяемых файлов перед установкой.</li>
-                        </ul>
-                    </div>
-                    <div class="app-footer-row">
-                        <div class="social-links">
-                            <a href="https://t.me/Asstrallity_mods" target="_blank" class="social-btn telegram-btn">
-                                <span class="material-symbols-outlined">send</span>
-                            </a>
-                            <a href="https://t.me/forblitz_mods" target="_blank" class="social-btn telegram-btn">
-                                <span class="material-symbols-outlined">rocket_launch</span>
-                            </a>
-                        </div>
-                        <div class="app-credits">Created by 01.01.2024</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="big-panel grow-panel">
-                <div class="panel-title">АВТОРЫ И КОНТРИБЬЮТОРЫ</div>
-                <div class="authors-list" id="authors-list-container">
-                    <div class="loader-spinner"><div class="spinner"></div></div>
-                </div>
-                <!-- КНОПКА VPN TEST -->
-                <div style="margin-top:auto; padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
-                    <button id="vpn-test-btn" class="install-btn" style="background:rgba(255,255,255,0.05); width:auto; font-size:12px; padding:8px 16px;">
-                         <span class="material-symbols-outlined" style="font-size:16px;">shield</span> VPN Test
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+async function loadMods() {
+    contentArea.innerHTML = '<div class="loader-spinner"><div class="spinner"></div><p>Загрузка каталога...</p></div>';
     
-    fetch(REPO_AUTHORS_URL)
-        .then(r => r.json())
-        .then(data => {
-            const container = document.getElementById('authors-list-container');
-            if(!container) return;
-            container.innerHTML = '';
-            data.forEach(au => {
-                const row = document.createElement('div');
-                row.className = 'author-row';
-                let avatarHtml = `<div class="author-avatar-placeholder" style="background:${au.color||'#555'}">${au.name[0]}</div>`;
-                if(au.avatar) {
-                    avatarHtml = `<img src="${au.avatar.startsWith('http')?au.avatar:REPO_BASE_URL+au.avatar}" class="author-img">`;
-                }
-                row.innerHTML = `
-                    <div class="author-avatar-wrapper">${avatarHtml}</div>
-                    <div class="author-details">
-                        <h3>${au.name}</h3>
-                        <span class="role">${au.role}</span>
-                        <p>${au.desc}</p>
-                    </div>
-                `;
-                container.appendChild(row);
-            });
-        })
-        .catch(() => {
-            const c = document.getElementById('authors-list-container');
-            if(c) c.innerHTML = '<p style="color:#777; text-align:center;">Ошибка загрузки авторов</p>';
-        });
-    
-    // Привязываем событие к кнопке VPN (она только что была создана)
-    setTimeout(() => {
-        const vpnBtn = document.getElementById('vpn-test-btn');
-        if(vpnBtn) {
-            vpnBtn.addEventListener('click', async () => {
-                if(!window.pywebview) {
-                    showToast("Доступно только в приложении");
-                    return;
-                }
-                
-                vpnBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px;">sync</span> Checking...';
-                
-                try {
-                    const res = await window.pywebview.api.check_connection_status();
-                    if(res.status === 'blocked') {
-                        const m = document.getElementById('geo-modal');
-                        if(m) m.classList.remove('hidden');
-                    } else {
-                        showToast("IP чист (доступ разрешен)");
-                    }
-                } catch(e) {
-                    showToast("Ошибка проверки");
-                } finally {
-                    vpnBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">shield</span> VPN Test';
-                }
-            });
-        }
-    }, 100);
-}
-
-async function loadMods(force = true) {
-    if (force) {
-        contentArea.innerHTML = `
-            <div class="loader-container" style="margin-top:100px;">
-                <div class="status-text dots">Загрузка каталога</div>
-                <div class="progress-track" style="width:200px;"><div class="progress-fill"></div></div>
-            </div>
-        `;
-    }
-
     try {
-        const [modsResp, buyResp] = await Promise.all([
-            fetch(REPO_JSON_URL + '?nocache=' + Date.now()),
-            fetch(REPO_BUY_URL + '?nocache=' + Date.now())
+        // Parallel fetch
+        const [modsRes, buyRes] = await Promise.all([
+            fetch(REPO_JSON_URL + '?t=' + Date.now()).then(r => r.json()),
+            fetch(REPO_BUY_URL + '?t=' + Date.now()).then(r => r.json())
         ]);
-        
-        const mods = await modsResp.json();
-        globalModsList = mods;
-        
-        let buyList = [];
-        try {
-            buyList = await buyResp.json();
-            globalBuyList = buyList;
-        } catch(e) {
-            console.warn("Buy list load failed");
-        }
 
-        // Get installed IDs from python
-        let installedIds = [];
-        if (window.pywebview) {
-            installedIds = await window.pywebview.api.check_installed_mods(mods);
-            globalInstalledIds = installedIds;
+        globalModsList = modsRes;
+        globalBuyList = buyRes;
+        
+        if(window.pywebview) {
+            globalInstalledIds = await window.pywebview.api.check_installed_mods(globalModsList);
         }
         
-        renderModsGrid(mods, installedIds, buyList);
+        renderModsGrid(globalModsList, globalBuyList, globalInstalledIds);
         
-        // Splash fade out if needed
-        if(splash && !splash.classList.contains('fade-out')) {
-             setTimeout(() => splash.classList.add('fade-out'), 500);
+        if(splash) {
+             splash.classList.add('fade-out');
+             setTimeout(()=> splash.style.display='none', 800);
         }
 
     } catch (e) {
-        contentArea.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined empty-icon">wifi_off</span><h3>Ошибка загрузки: ${e.message}</h3></div>`;
+        contentArea.innerHTML = `<div class="error-text">Ошибка загрузки: ${e.message}</div>`;
+        if(splash) splash.style.display='none';
     }
 }
 
-function renderModsGrid(mods, installedIds, buyList) {
-    contentArea.innerHTML = '<div class="content-grid" id="mods-grid"></div>';
-    const grid = document.getElementById('mods-grid');
-    
-    if (mods.length === 0) {
-        grid.innerHTML = 'Пусто.';
+async function loadInstalled() {
+    if(!window.pywebview) {
+        contentArea.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined empty-icon">desktop_access_disabled</span><p>Требуется приложение</p></div>';
         return;
     }
+    
+    globalInstalledIds = await window.pywebview.api.check_installed_mods(globalModsList);
+    const installedMods = globalModsList.filter(m => globalInstalledIds.includes(m.id));
+    
+    if (installedMods.length === 0) {
+        contentArea.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined empty-icon">inventory_2</span><p>Пусто. Установите что-нибудь!</p></div>';
+        return;
+    }
+    
+    renderModsGrid(installedMods, globalBuyList, globalInstalledIds);
+}
 
+function renderModsGrid(mods, buyList, installedIds) {
+    contentArea.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'content-grid fade-in';
+    contentArea.appendChild(grid);
+    
+    if(mods.length === 0) { grid.innerHTML = 'Пусто.'; return; }
+    
     mods.forEach(mod => {
         let img = mod.image || "";
         if(img && !img.startsWith('http')) img = REPO_BASE_URL + img;
         if(!img) img = "https://via.placeholder.com/400x220/111/fff?text=No+Image";
-
+        
         const isInst = installedIds.includes(mod.id);
         const buyInfo = buyList.find(b => b.id === mod.id);
         
@@ -531,7 +345,7 @@ function renderModsGrid(mods, installedIds, buyList) {
         let btnClass = 'install-btn';
         let isDisabled = false;
         let onClickAction = `startInstallProcess('${mod.id}', '${mod.name}', '${mod.file}')`;
-        
+
         if (buyInfo) {
             if (buyInfo.status === 'preorder') {
                 btnText = 'Предзаказ';
@@ -543,15 +357,15 @@ function renderModsGrid(mods, installedIds, buyList) {
                 onClickAction = `openInfoModal('paid', '${mod.id}')`;
             }
         } else {
-            if (!window.pywebview) {
+             if (!window.pywebview) {
                 btnText = 'Доступно в приложении';
                 isDisabled = true;
-            } else if (isInst) {
+             } else if (isInst) {
                 btnText = 'Уже установлен';
                 btnIcon = 'check';
                 btnClass = 'install-btn installed';
                 isDisabled = true;
-            }
+             }
         }
 
         const card = document.createElement('div');
@@ -560,11 +374,10 @@ function renderModsGrid(mods, installedIds, buyList) {
             <img src="${img}" class="card-image" loading="lazy">
             <div class="card-content">
                 <div class="card-title">${mod.name}</div>
-                <div class="card-author">by <span>${mod.author}</span></div>
+                <div class="card-author">by <span>${mod.author || "Unknown"}</span></div>
                 <div class="card-desc">${mod.description || ""}</div>
-                <button class="${btnClass}" onclick="${onClickAction}" ${isDisabled?'disabled':''}>
-                    <span class="material-symbols-outlined">${btnIcon}</span>
-                    ${btnText}
+                <button class="${btnClass}" onclick="${onClickAction}" ${isDisabled ? 'disabled' : ''}>
+                    <span class="material-symbols-outlined">${btnIcon}</span> ${btnText}
                 </button>
             </div>
         `;
@@ -572,38 +385,39 @@ function renderModsGrid(mods, installedIds, buyList) {
     });
 }
 
-function openInfoModal(type, modId) {
-    const buyItem = globalBuyList.find(x => x.id === modId);
-    const modItem = globalModsList.find(x => x.id === modId);
-    if (!buyItem || !modItem) return;
+// INFO MODAL
+window.openInfoModal = (type, id) => {
+    const mod = globalModsList.find(m => m.id === id);
+    const buyItem = globalBuyList.find(b => b.id === id);
+    if(!mod) return;
 
-    infoTitle.innerText = modItem.name;
+    infoTitle.innerText = mod.name;
+    infoDesc.innerHTML = buyItem ? buyItem.desc : "Описание недоступно.";
     
-    let htmlDesc = `<div class="info-description">${buyItem.desc || "Описание недоступно."}</div>`;
-    
-    htmlDesc += `<div class="info-price-tag">${buyItem.price}</div>`;
+    const pb = document.getElementById('info-modal-price-block');
+    pb.innerHTML = '';
 
-    if (type === 'preorder') {
-        infoActionBtn.innerText = "Связаться для предзаказа";
-    } else {
-        infoActionBtn.innerText = "Купить сейчас";
+    if(type === 'preorder') {
+        infoActionBtn.innerText = "Оформить предзаказ";
+        infoActionBtn.disabled = true;
+        infoActionBtn.style.background = "#444";
+    } else if (type === 'paid') {
+        infoActionBtn.innerText = "Перейти к покупке";
+        infoActionBtn.disabled = false;
+        infoActionBtn.onclick = () => {
+             if(buyItem && buyItem.link) window.open(buyItem.link, '_blank');
+        };
+        const ptag = document.createElement('span');
+        ptag.className = "info-price-tag";
+        ptag.innerText = buyItem.price || "Цена не указана";
+        pb.appendChild(ptag);
     }
-    
-    // Clean up old listeners
-    const newBtn = infoActionBtn.cloneNode(true);
-    infoActionBtn.parentNode.replaceChild(newBtn, infoActionBtn);
-    
-    newBtn.addEventListener('click', () => {
-        if(window.pywebview) window.pywebview.api.open_link(buyItem.link);
-        else window.open(buyItem.link, '_blank');
-    });
-    
-    infoDesc.innerHTML = htmlDesc;
+
     infoModal.classList.remove('hidden');
 }
-
 if(infoCloseBtn) infoCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
 
+// INSTALL LOGIC
 function startInstallProcess(id, name, url) {
     if(!window.pywebview) return;
     
@@ -612,7 +426,6 @@ function startInstallProcess(id, name, url) {
     installView.classList.remove('view-hidden');
     successView.classList.add('view-hidden');
     errorView.classList.add('view-hidden');
-    
     progressBar.style.width = "0%";
     progressPercent.innerText = "0%";
     modalTitle.innerText = name;
@@ -643,7 +456,7 @@ window.finishInstall = (s, m) => {
         successView.classList.remove('view-hidden');
         setTimeout(() => {
             closeModal();
-            loadMods(); 
+            loadMods();
         }, 2000);
     } else {
         if(m==="Canceled"){closeModal();}
@@ -656,21 +469,20 @@ window.finishInstall = (s, m) => {
     }
 }
 
-// === REPAIR SYSTEM ===
+// REPAIR
 function openRepairModal() {
     const installedMods = globalModsList.filter(m => globalInstalledIds.includes(m.id));
     repairList.innerHTML = '';
     
-    if (installedMods.length === 0) {
-        repairList.innerHTML = '<div class="empty-state" style="height:150px;"><p>Нет установленных модов для починки.</p></div>';
-    } else {
+    if (installedMods.length === 0) repairList.innerHTML = '<div style="text-align:center; color:#777; padding:20px;">Нет установленных модов для починки.</div>';
+    else {
         installedMods.forEach(mod => {
             const item = document.createElement('div');
             item.className = 'repair-item';
             item.innerHTML = `
                 <span>${mod.name}</span>
-                <button class="repair-action-btn" onclick="restoreMod('${mod.id}', '${mod.name}')">
-                    <span class="material-symbols-outlined">delete_forever</span>
+                <button class="repair-action-btn" title="Удалить / Восстановить" onclick="restoreMod('${mod.id}', '${mod.name}')">
+                    <span class="material-symbols-outlined">delete_history</span>
                 </button>
             `;
             repairList.appendChild(item);
@@ -679,61 +491,42 @@ function openRepairModal() {
     repairModal.classList.remove('hidden');
 }
 
-async function restoreMod(id, name) {
+window.restoreMod = async (id, name) => {
     repairModal.classList.add('hidden');
+    
     installView.classList.remove('view-hidden');
     successView.classList.add('view-hidden');
     errorView.classList.add('view-hidden');
-    
     progressBar.style.width = "100%";
     progressPercent.innerText = "";
     modalTitle.innerText = "Восстановление...";
     modalStatus.innerText = "Обработка...";
-    
     modal.classList.remove('hidden');
-    
+
     const res = await window.pywebview.api.restore_mod(id);
-    if (res.success) {
-        finishInstall(true, res.message);
-    } else {
-        finishInstall(false, res.message);
-    }
+    if (res.success) finishInstall(true, res.message);
+    else finishInstall(false, res.message);
 }
 
 if(repairCloseBtn) repairCloseBtn.addEventListener('click', () => repairModal.classList.add('hidden'));
 const rb = document.getElementById('global-repair-btn');
 if(rb) rb.addEventListener('click', openRepairModal);
 
-// --- СОЗДАНИЕ ОКНА БЛОКИРОВКИ ---
-function createGeoModal() {
-    const overlay = document.createElement('div');
-    overlay.id = 'geo-modal';
-    overlay.className = 'modal-overlay hidden';
-    overlay.style.zIndex = '10000';
-
-    const content = document.createElement('div');
-    content.className = 'modal-content';
-    content.style.textAlign = 'center';
-    content.style.maxWidth = '420px';
-    content.style.border = '1px solid #ff5252';
-
-    content.innerHTML = `
-        <span class="material-symbols-outlined" style="font-size: 48px; color: #ff5252; margin-bottom: 16px;">public_off</span>
-        <h3 style="margin-bottom: 10px; color: #ff5252;">Доступ ограничен</h3>
-        <p style="color: var(--md-sys-color-on-surface); margin-bottom: 24px; line-height: 1.5;">
-            Обнаружен IP-адрес Украины.<br>
-            Пожалуйста, включите <b>VPN (Россия/Европа)</b> для доступа.
-        </p>
-        <button id="geo-close-btn" class="install-btn" style="background-color: #ff5252; color: white;">
-            <span class="material-symbols-outlined">check</span>
-            Понял
-        </button>
+function renderAbout() {
+    contentArea.innerHTML = `
+    <div class="about-page-container fade-in">
+        <div class="big-panel grow-panel" style="align-items:center; text-align:center;">
+            <img src="https://i.imgur.com/6Jj3J3k.png" style="width:100px; margin-bottom:20px;">
+            <h2 style="font-size:28px; margin-bottom:10px;">LOADER ASTR</h2>
+            <p style="color:var(--md-sys-color-primary); font-weight:700; margin-bottom:20px;">v1.0.0 Release</p>
+            <p style="color:#999; max-width:600px; line-height:1.6;">
+                Это универсальный лаунчер-загрузчик модов в игру <b>Tanks Blitz</b>.
+                <br>Разработан для упрощения установки модификаций, без лишних действий с файловой системой.
+                <br><br>
+                Авторы: <span style="color:#fff;">Asstrallity Team</span>
+            </p>
+            <button style="margin-top:30px; background:transparent; border:1px solid #555; color:#ccc; padding:10px 30px; border-radius:20px; cursor:pointer;" onclick="checkEnvironment()">Перезагрузить UI</button>
+        </div>
+    </div>
     `;
-
-    overlay.appendChild(content);
-    document.body.appendChild(overlay);
-    
-    document.getElementById('geo-close-btn').addEventListener('click', () => {
-        overlay.classList.add('hidden');
-    });
 }
