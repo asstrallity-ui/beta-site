@@ -1,8 +1,9 @@
 const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
-const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
 const REPO_BUY_URL = 'https://rh-archive.ru/mods_files_github/buy.json';
+const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
 const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 
+// Elements
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
 const pageTitle = document.getElementById('page-title');
@@ -10,7 +11,7 @@ const splash = document.getElementById('splash-screen');
 const vpnModal = document.getElementById('vpn-modal');
 const toast = document.getElementById('toast-notification');
 
-// Modals
+// Install Modal
 const progressModal = document.getElementById('progress-modal');
 const installView = document.getElementById('install-view');
 const successView = document.getElementById('success-view');
@@ -22,11 +23,12 @@ const modalStatus = document.getElementById('modal-status');
 const modalTitle = document.getElementById('modal-title');
 const modalCloseBtn = document.getElementById('modal-close-btn');
 
+// Repair Modal
 const repairModal = document.getElementById('repair-modal');
 const repairList = document.getElementById('repair-list');
 const repairCloseBtn = document.getElementById('repair-close-btn');
 
-// Info Modal (Buy)
+// Info Modal
 const infoModal = document.getElementById('info-modal');
 const infoModName = document.getElementById('info-mod-name');
 const infoDesc = document.getElementById('info-modal-desc');
@@ -34,9 +36,9 @@ const infoPrice = document.getElementById('info-price');
 const infoActionBtn = document.getElementById('info-modal-action');
 const infoCloseBtn = document.getElementById('info-close-btn');
 
-// Update
-const btnCheckUpdates = document.getElementById('btn-check-updates');
+// Update Modal
 const updateModal = document.getElementById('update-modal');
+const btnCheckUpdates = document.getElementById('btn-check-updates');
 const updateVerSpan = document.getElementById('update-version');
 const updateSizeSpan = document.getElementById('update-size');
 const updateLogP = document.getElementById('update-changelog');
@@ -53,87 +55,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedColor = localStorage.getItem('accentColor');
     if (savedColor) applyAccentColor(savedColor);
 
+    // INIT LOOP
     let attempts = 0;
     const interval = setInterval(() => {
         attempts++;
+        // Ждем pywebview или таймаут 5 сек
         if (window.pywebview || attempts > 50) {
             clearInterval(interval);
-            
-            // Сначала грузим контент
-            loadMods(); 
-            
-            // Проверяем сеть асинхронно, чтобы не тормозить
-            setTimeout(checkNetwork, 1500);
-            
-            // Убираем сплэш
-            setTimeout(() => splash.style.opacity = 0, 800);
-            setTimeout(() => splash.style.display = 'none', 1300);
+            initApp();
         }
     }, 100);
 
-    // Навигация
+    // Event Listeners
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const target = item.dataset.target;
             if(!target) return;
-            
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
-            
-            if (target === 'mods') {
-                pageTitle.innerText = "Каталог модов";
-                loadMods();
-            } else if (target === 'settings') {
-                pageTitle.innerText = "Настройки";
-                renderSettings();
-            } else if (target === 'about') {
-                pageTitle.innerText = "О программе";
-                renderAbout();
-            }
+            if (target === 'mods') { pageTitle.innerText = "Каталог"; loadMods(); }
+            else if (target === 'settings') { pageTitle.innerText = "Настройки"; renderSettings(); }
+            else if (target === 'about') { pageTitle.innerText = "О программе"; renderAbout(); }
         });
     });
 
-    // VPN Тест
-    const btnTest = document.getElementById('btn-test-vpn');
-    if(btnTest) {
-        btnTest.addEventListener('click', () => vpnModal.classList.remove('hidden'));
-    }
-    
-    // VPN Reload
-    const btnRel = document.getElementById('btn-vpn-reload');
-    if(btnRel) {
-        btnRel.addEventListener('click', () => window.location.reload());
-    }
-    
-    // Modal Close
-    if(modalCloseBtn) {
-        modalCloseBtn.addEventListener('click', () => {
-            if(window.pywebview) window.pywebview.api.cancel_install();
-            progressModal.classList.add('hidden');
-        });
-    }
-    
-    // Repair Close
-    if(repairCloseBtn) {
-        repairCloseBtn.addEventListener('click', () => repairModal.classList.add('hidden'));
-    }
-
-    // Global Repair Button
-    const rb = document.getElementById('global-repair-btn');
-    if(rb) {
-        rb.addEventListener('click', openRepairModal);
-    }
-
-    // Update Check Button
-    if(btnCheckUpdates) {
-        btnCheckUpdates.addEventListener('click', checkForUpdates);
-    }
-
-    // Info Close
-    if(infoCloseBtn) {
-        infoCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
-    }
+    setupButtons();
 });
+
+function initApp() {
+    console.log("App Init");
+    loadMods();
+    
+    setTimeout(() => {
+        checkNetwork();
+        // Скрываем сплэш
+        if(splash) {
+            splash.style.opacity = 0;
+            setTimeout(() => splash.style.display = 'none', 800);
+        }
+    }, 1000);
+}
+
+function setupButtons() {
+    const btnTest = document.getElementById('btn-test-vpn');
+    if(btnTest) btnTest.addEventListener('click', () => vpnModal.classList.remove('hidden'));
+    
+    const btnRel = document.getElementById('btn-vpn-reload');
+    if(btnRel) btnRel.addEventListener('click', () => window.location.reload());
+    
+    if(modalCloseBtn) modalCloseBtn.addEventListener('click', () => {
+        if(window.pywebview) window.pywebview.api.cancel_install();
+        progressModal.classList.add('hidden');
+    });
+    
+    if(repairCloseBtn) repairCloseBtn.addEventListener('click', () => repairModal.classList.add('hidden'));
+    
+    const rb = document.getElementById('global-repair-btn');
+    if(rb) rb.addEventListener('click', openRepairModal);
+
+    if(btnCheckUpdates) btnCheckUpdates.addEventListener('click', checkForUpdates);
+    if(infoCloseBtn) infoCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+    
+    if(btnSkipUpdate) btnSkipUpdate.addEventListener('click', () => updateModal.classList.add('hidden'));
+    if(btnStartUpdate) btnStartUpdate.addEventListener('click', () => {
+        if(window.pywebview) window.pywebview.api.perform_update(newUpdateUrl);
+    });
+}
 
 async function checkNetwork() {
     if(!window.pywebview) return;
@@ -142,82 +129,74 @@ async function checkNetwork() {
         if (res.status === 'blocked' && res.country === 'UA') {
             vpnModal.classList.remove('hidden');
         } else if (res.status === 'error') {
-            showToast("Сервер недоступен. Проверьте соединение.");
+            showToast("Сервер недоступен");
         }
-    } catch(e) {
-        console.error("Network check fail:", e);
-    }
+    } catch(e) { console.error(e); }
 }
 
 async function loadMods() {
-    contentArea.innerHTML = '<div class="loader-spinner">Загрузка...</div>';
+    if(contentArea) contentArea.innerHTML = '<div class="loader-spinner">Загрузка...</div>';
     try {
-        const [modsRes, buyRes, authorsRes] = await Promise.all([
-            fetch(REPO_JSON_URL + '?t=' + Date.now()).then(r => r.json()),
-            fetch(REPO_BUY_URL + '?t=' + Date.now()).then(r => r.json()),
-            fetch(REPO_AUTHORS_URL + '?t=' + Date.now()).then(r => r.json())
+        // Parallel fetch
+        const [mods, buy] = await Promise.all([
+            fetch(REPO_JSON_URL).then(r => r.json()).catch(() => []),
+            fetch(REPO_BUY_URL).then(r => r.json()).catch(() => [])
         ]);
-
-        globalModsList = modsRes;
-        globalBuyList = buyRes;
+        
+        globalModsList = mods;
+        globalBuyList = buy;
         
         if(window.pywebview) {
-            globalInstalledIds = await window.pywebview.api.check_installed_mods(globalModsList);
+            globalInstalledIds = await window.pywebview.api.check_installed_mods(mods);
         }
-
-        renderMods(globalModsList, globalBuyList, globalInstalledIds);
-
+        
+        renderMods(mods, buy, globalInstalledIds);
     } catch(e) {
-        contentArea.innerHTML = `<div class="error-text">Ошибка загрузки: ${e.message}</div>`;
+        if(contentArea) contentArea.innerHTML = `<div class="error-text">Ошибка: ${e.message}</div>`;
     }
 }
 
-function renderMods(mods, buyList, installedIds) {
+function renderMods(mods, buyList, installed) {
+    if(!contentArea) return;
     contentArea.innerHTML = '';
+    if(mods.length === 0) {
+        contentArea.innerHTML = '<div class="error-text">Нет модов или нет сети.</div>';
+        return;
+    }
+
     const grid = document.createElement('div');
     grid.className = 'mods-grid';
     
     mods.forEach(mod => {
-        const buyInfo = buyList.find(b => b.id === mod.id);
-        const isInstalled = installedIds.includes(mod.id);
-        
-        let btnText = 'Установить';
-        let btnClass = 'install-btn';
+        const b = buyList.find(x => x.id === mod.id);
+        const isInst = installed.includes(mod.id);
+        let btnTxt = 'Установить', icon = 'download', cls = 'install-btn';
         let action = `startInstall('${mod.id}', '${mod.file}', '${mod.name}')`;
-        let icon = 'download';
 
-        if (buyInfo) {
-            if (buyInfo.status === 'preorder') {
-                btnText = 'Предзаказ';
-                icon = 'schedule';
-            } else {
-                btnText = 'Купить';
-                icon = 'shopping_cart';
-            }
-            // Открытие инфо окна
-            action = `openInfoModal('${mod.id}', '${mod.name}', '${buyInfo.desc}', '${buyInfo.price}', '${buyInfo.link}')`;
-        } else {
-            if (isInstalled) {
-                btnText = 'Установлен';
-                btnClass += ' installed';
-                icon = 'check';
-            }
+        if(b) {
+            btnTxt = b.status === 'preorder' ? 'Предзаказ' : 'Купить';
+            icon = 'shopping_cart';
+            action = `openInfoModal('${mod.id}', '${mod.name}', '${b.desc}', '${b.price}', '${b.link}')`;
+        } else if(isInst) {
+            btnTxt = 'Установлен';
+            cls += ' installed';
+            icon = 'check';
         }
-
-        let img = mod.image || "";
-        if (img && !img.startsWith('http')) img = REPO_BASE_URL + img;
 
         const card = document.createElement('div');
         card.className = 'mod-card';
+        let img = mod.image;
+        if(img && !img.startsWith('http')) img = REPO_BASE_URL + img;
+        
         card.innerHTML = `
-            <img src="${img}" class="mod-image">
+            <img src="${img}" class="mod-image" onerror="this.style.display='none'">
             <div class="mod-content">
                 <h3 class="mod-title">${mod.name}</h3>
-                <div class="mod-author">by ${mod.author || "Unknown"}</div>
-                <div class="mod-desc">${mod.description || ""}</div>
+                <div class="mod-author">by ${mod.author}</div>
+                <div class="mod-desc">${mod.description}</div>
                 <div class="mod-actions">
-                    <button class="${btnClass}" onclick="${action}">
-                        <span class="material-symbols-rounded">${icon}</span> ${btnText}
+                    <button class="${cls}" onclick="${action}">
+                        <span class="material-symbols-rounded">${icon}</span> ${btnTxt}
                     </button>
                 </div>
             </div>
@@ -228,74 +207,62 @@ function renderMods(mods, buyList, installedIds) {
 }
 
 function startInstall(id, url, name) {
-    if(!window.pywebview) return;
+    if(!window.pywebview) { showToast("Только в приложении"); return; }
     if(url && !url.startsWith('http')) url = REPO_BASE_URL + url;
     
     modalTitle.innerText = name;
-    modalStatus.innerText = "Подготовка...";
+    modalStatus.innerText = "Start...";
     progressBar.style.width = '0%';
     progressPercent.innerText = '0%';
     
     installView.classList.remove('view-hidden');
     successView.classList.add('view-hidden');
     errorView.classList.add('view-hidden');
-    
     progressModal.classList.remove('hidden');
     
     window.pywebview.api.install_mod(id, url, currentInstallMethod);
 }
 
+// Callbacks from Python
 window.updateRealProgress = (pct, txt) => {
     if(progressBar) progressBar.style.width = pct + "%";
     if(progressPercent) progressPercent.innerText = pct + "%";
     if(modalStatus) modalStatus.innerText = txt;
 };
 
-window.finishInstall = (success, msg) => {
-    if(success) {
+window.finishInstall = (ok, msg) => {
+    if(ok) {
         installView.classList.add('view-hidden');
         successView.classList.remove('view-hidden');
-        setTimeout(() => {
-            progressModal.classList.add('hidden');
-            loadMods(); // Перезагружаем список, чтобы обновилась кнопка
-        }, 2000);
+        setTimeout(() => { progressModal.classList.add('hidden'); loadMods(); }, 2000);
     } else {
-        if(msg === 'Canceled') {
-            progressModal.classList.add('hidden');
-        } else {
+        if(msg === 'Canceled') progressModal.classList.add('hidden');
+        else {
             installView.classList.add('view-hidden');
             errorView.classList.remove('view-hidden');
-            errorMessage.innerText = msg;
+            if(errorMessage) errorMessage.innerText = msg;
         }
     }
 };
 
 function openInfoModal(id, name, desc, price, link) {
     infoModName.innerText = name;
-    infoDesc.innerText = desc || "Описание отсутствует.";
-    infoPrice.innerText = price || "Цена не указана";
-    
-    infoActionBtn.onclick = () => {
-        window.open(link, '_blank');
-    };
-    
+    infoDesc.innerText = desc;
+    infoPrice.innerText = price;
+    infoActionBtn.onclick = () => window.open(link, '_blank');
     infoModal.classList.remove('hidden');
 }
 
 function openRepairModal() {
     repairList.innerHTML = '';
-    if(globalInstalledIds.length === 0) {
-        repairList.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Нет установленных модов.</div>';
-    } else {
+    if(globalInstalledIds.length === 0) repairList.innerHTML = '<div style="text-align:center;padding:20px;">Пусто</div>';
+    else {
         globalInstalledIds.forEach(id => {
-            const mod = globalModsList.find(m => m.id === id);
-            if(!mod) return;
+            const m = globalModsList.find(x=>x.id===id);
+            if(!m) return;
             const item = document.createElement('div');
             item.className = 'repair-item';
-            item.innerHTML = `
-                <span>${mod.name}</span>
-                <button class="repair-btn-small" onclick="doRestore('${mod.id}')">Удалить</button>
-            `;
+            item.innerHTML = `<span>${m.name}</span><button class="repair-btn-small" onclick="doRestore('${m.id}')">Удалить</button>`;
             repairList.appendChild(item);
         });
     }
@@ -306,68 +273,42 @@ async function doRestore(id) {
     repairModal.classList.add('hidden');
     showToast("Удаление...");
     const res = await window.pywebview.api.restore_mod(id);
-    if(res.success) {
-        showToast("Успешно удалено");
-        loadMods();
-    } else {
-        showToast("Ошибка: " + res.message);
-    }
+    if(res.success) { showToast("Удалено"); loadMods(); }
+    else showToast(res.message);
 }
 
 async function checkForUpdates() {
-    if (!window.pywebview) {
-        showToast("Недоступно в браузере");
-        return;
-    }
-    showToast("Проверка обновлений...");
+    if(!window.pywebview) return;
+    showToast("Проверка...");
     try {
         const res = await window.pywebview.api.check_for_updates();
-        if (res.available) {
+        if(res.available) {
             newUpdateUrl = res.url;
-            updateVerSpan.innerText = "v" + res.version;
+            updateVerSpan.innerText = res.version;
             updateLogP.innerText = res.changelog;
-            updateSizeSpan.innerText = res.size || "Неизвестно";
             updateModal.classList.remove('hidden');
-        } else {
-            showToast("Обновлений нет");
-        }
-    } catch (e) {
-        showToast("Ошибка проверки");
-    }
+        } else showToast("Обновлений нет");
+    } catch(e) { showToast("Ошибка"); }
 }
 
 function renderSettings() {
     contentArea.innerHTML = `
         <div class="settings-section">
-            <div class="settings-title">Основные</div>
+            <div class="settings-title">Настройки</div>
             <div class="setting-item">
-                <div class="setting-info">
-                    <h4>Метод установки (SDLS)</h4>
-                    <p>Устанавливать в папку Documents/packs (рекомендуется для модов).</p>
+                <div class="setting-info"><h4>SDLS Метод</h4><p>Использовать Documents/packs</p></div>
+                <label class="switch"><input type="checkbox" id="sdls-toggle" ${currentInstallMethod==='auto'?'checked':''}><span class="slider"></span></label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info"><h4>Цвет</h4></div>
+                <div class="color-options">
+                    <div class="color-circle" style="background:#d0bcff" onclick="applyAccentColor('#d0bcff')"></div>
+                    <div class="color-circle" style="background:#ffb7b2" onclick="applyAccentColor('#ffb7b2')"></div>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="sdls-toggle" ${currentInstallMethod === 'auto' || currentInstallMethod === 'sdls' ? 'checked' : ''}>
-                    <span class="slider"></span>
-                </label>
             </div>
-        </div>
-        <div class="settings-section">
-            <div class="settings-title">Внешний вид</div>
-            <div class="color-options">
-                <div class="color-circle" style="background:#d0bcff" onclick="applyAccentColor('#d0bcff')"></div>
-                <div class="color-circle" style="background:#ffb7b2" onclick="applyAccentColor('#ffb7b2')"></div>
-                <div class="color-circle" style="background:#a0c4ff" onclick="applyAccentColor('#a0c4ff')"></div>
-                <div class="color-circle" style="background:#9bf6ff" onclick="applyAccentColor('#9bf6ff')"></div>
-            </div>
-        </div>
-    `;
-    
-    const toggle = document.getElementById('sdls-toggle');
-    if(toggle) {
-        toggle.addEventListener('change', (e) => {
-            currentInstallMethod = e.target.checked ? 'auto' : 'standard';
-        });
-    }
+        </div>`;
+    const tg = document.getElementById('sdls-toggle');
+    if(tg) tg.onchange = (e) => currentInstallMethod = e.target.checked ? 'auto' : 'standard';
 }
 
 function applyAccentColor(hex) {
@@ -376,14 +317,7 @@ function applyAccentColor(hex) {
 }
 
 function renderAbout() {
-    contentArea.innerHTML = `
-        <div class="big-panel">
-            <h2>Loader ASTR</h2>
-            <p>Версия: 1.0.0</p>
-            <p>Универсальный загрузчик модов для Tanks Blitz.</p>
-            <p style="margin-top:20px; color:#666;">Разработано ASSTRALLITY</p>
-        </div>
-    `;
+    contentArea.innerHTML = '<div class="big-panel"><h2>Loader ASTR</h2><p>v1.0.0</p></div>';
 }
 
 function showToast(msg) {
