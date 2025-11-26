@@ -1,426 +1,398 @@
-const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
-const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
-const REPO_BUY_URL = 'https://rh-archive.ru/mods_files_github/buy.json'; 
-const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
-
-const contentArea = document.getElementById('content-area');
-const navItems = document.querySelectorAll('.nav-item');
-
-const modal = document.getElementById('progress-modal');
-const installView = document.getElementById('install-view');
-const successView = document.getElementById('success-view');
-const errorView = document.getElementById('error-view');
-const errorMessage = document.getElementById('error-message');
-const progressBar = document.getElementById('progress-bar');
-const progressPercent = document.getElementById('progress-percent');
-const modalStatus = document.getElementById('modal-status');
-const modalTitle = document.getElementById('modal-title');
-const modalCloseBtn = document.getElementById('modal-close-btn');
-
-const repairModal = document.getElementById('repair-modal'); 
-const repairList = document.getElementById('repair-list');
-const repairCloseBtn = document.getElementById('repair-close-btn');
-
-const infoModal = document.getElementById('info-modal'); 
-const infoTitle = document.getElementById('info-modal-title');
-const infoDesc = document.getElementById('info-modal-desc');
-const infoActionBtn = document.getElementById('info-modal-action');
-const infoCloseBtn = document.getElementById('info-close-btn');
-
-const splash = document.getElementById('splash-screen');
-
-// Обновление
-const btnCheckUpdates = document.getElementById('btn-check-updates');
-const updateModal = document.getElementById('update-modal');
-const updateVerSpan = document.getElementById('update-version');
-const updateSizeSpan = document.getElementById('update-size');
-const updateLogP = document.getElementById('update-changelog');
-const btnStartUpdate = document.getElementById('btn-start-update');
-const btnSkipUpdate = document.getElementById('btn-skip-update');
-const toast = document.getElementById('toast-notification');
-
-let currentInstallMethod = 'auto'; 
-let globalModsList = []; 
-let globalBuyList = []; 
-let globalInstalledIds = [];
-let newUpdateUrl = "";
-
-document.addEventListener('DOMContentLoaded', () => {
-    const savedColor = localStorage.getItem('accentColor');
-    if (savedColor) applyAccentColor(savedColor); else applyAccentColor('#d0bcff');
-    
-    let attempts = 0;
-    const interval = setInterval(() => {
-        attempts++;
-        if (window.pywebview || attempts > 50) {
-            checkEnvironment();
-            loadMods(); 
-            if (window.pywebview) clearInterval(interval);
-        }
-    }, 100);
-    
-    checkPing(); 
-    setInterval(checkPing, 5000);
-});
-
-window.addEventListener('pywebviewready', checkEnvironment);
-
-function showToast(msg) {
-    if(!toast) return;
-    toast.innerText = msg;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3000);
+:root {
+    --md-sys-color-background: #101010;
+    --md-sys-color-surface: #1e1e1e;
+    --md-sys-color-surface-variant: #2c2c2c;
+    --md-sys-color-primary: #d0bcff;
+    --md-sys-color-primary-rgb: 208, 188, 255;
+    --md-sys-color-on-primary: #381e72;
+    --md-sys-color-secondary-container: #4a4458;
+    --md-sys-color-on-surface: #e6e1e5;
+    --md-sys-color-outline: #938f99;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    --glass-hover-bg: rgba(255, 255, 255, 0.05);
+    --glass-hover-border: var(--md-sys-color-primary);
+    --glass-hover-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    --glass-blur: 20px;
 }
 
-async function checkForUpdates(manual = false) {
-    if (!window.pywebview) {
-        if(manual) showToast("Доступно только в приложении");
-        return;
-    }
-    
-    if(manual && btnCheckUpdates) {
-        const icon = btnCheckUpdates.querySelector('span');
-        icon.style.animation = "spin 1s linear infinite";
-    }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; user-select: none; }
 
-    try {
-        const res = await window.pywebview.api.check_for_updates();
-        
-        if (res.available) {
-            newUpdateUrl = res.url;
-            updateVerSpan.innerText = "v" + res.version;
-            updateLogP.innerText = res.changelog;
-            updateSizeSpan.innerText = res.size || "Неизвестно";
-            updateModal.classList.remove('hidden');
-        } else {
-            if (manual) showToast(res.message || "Обновлений не найдено");
-        }
-    } catch (e) {
-        if (manual) showToast("Ошибка проверки");
-    } finally {
-        if(manual && btnCheckUpdates) {
-            const icon = btnCheckUpdates.querySelector('span');
-            icon.style.animation = "none";
-        }
-    }
+body {
+    background-color: var(--md-sys-color-background);
+    color: var(--md-sys-color-on-surface);
+    height: 100vh;
+    overflow: hidden;
+    background-image:
+    radial-gradient(circle at top right, rgba(var(--md-sys-color-primary-rgb), 0.08) 0%, transparent 40%),
+    radial-gradient(circle at bottom left, rgba(var(--md-sys-color-primary-rgb), 0.05) 0%, transparent 40%);
 }
 
-if (btnCheckUpdates) btnCheckUpdates.addEventListener('click', () => checkForUpdates(true));
-
-if (btnStartUpdate) {
-    btnStartUpdate.addEventListener('click', () => {
-        btnStartUpdate.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Скачивание...';
-        btnStartUpdate.disabled = true;
-        btnSkipUpdate.style.display = 'none';
-        window.pywebview.api.perform_update(newUpdateUrl);
-    });
+#splash-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--md-sys-color-background);
+    background-image: radial-gradient(circle at top right, rgba(var(--md-sys-color-primary-rgb), 0.1) 0%, transparent 50%), radial-gradient(circle at bottom left, rgba(var(--md-sys-color-primary-rgb), 0.05) 0%, transparent 50%);
+    z-index: 9999; display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
 }
 
-if (btnSkipUpdate) btnSkipUpdate.addEventListener('click', () => updateModal.classList.add('hidden'));
+#splash-screen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; transform: scale(1.05); }
 
-async function checkPing() {
-    const pingText = document.getElementById('ping-text');
-    const pingDot = document.getElementById('ping-dot');
-    if (!pingText || !pingDot) return;
-    
-    const start = Date.now();
-    try {
-        await fetch(REPO_JSON_URL + '?t=' + start, { method: 'HEAD', cache: 'no-store' });
-        const end = Date.now();
-        const ping = end - start;
-        pingText.innerText = `Соединено: ${ping} ms`;
-        pingDot.style.backgroundColor = ping < 150 ? '#4caf50' : (ping < 300 ? '#ff9800' : '#f44336');
-        pingDot.style.boxShadow = `0 0 8px ${pingDot.style.backgroundColor}`;
-    } catch (e) {
-        pingText.innerText = 'Нет сети';
-        pingDot.style.backgroundColor = '#f44336';
-        pingDot.style.boxShadow = 'none';
-    }
+.loader-container { width: 420px; display: flex; flex-direction: column; align-items: center; }
+
+.status-text { font-size: 24px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: #ffffff; margin-bottom: 32px; text-shadow: 0 0 20px rgba(255, 255, 255, 0.1); display: flex; align-items: center; }
+
+.dots::after { content: ''; animation: dots 1.5s steps(4, end) infinite; }
+
+@keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
+
+.progress-track { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); }
+
+.progress-fill { height: 100%; background: var(--md-sys-color-primary); width: 0%; border-radius: 10px; box-shadow: 0 0 25px var(--md-sys-color-primary); animation: loadBar 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@keyframes loadBar { 0% { width: 0%; } 20% { width: 25%; } 50% { width: 60%; } 100% { width: 100%; } }
+
+.app-container { display: flex; height: 100%; width: 100%; }
+
+.glass, .sidebar { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); border: 1px solid var(--glass-border); }
+
+.sidebar { width: 260px; display: flex; flex-direction: column; padding: 20px; z-index: 10; border-left: none; border-bottom: none; border-top: none; box-shadow: 5px 0 30px rgba(0,0,0,0.2); }
+
+.logo-area { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-left: 10px; }
+
+.logo-icon-img { width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2)); }
+
+.logo-area h1 { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+
+.nav-menu { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+
+.nav-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; background: transparent; border: none; color: var(--md-sys-color-on-surface); border-radius: 28px; cursor: pointer; transition: 0.2s; font-size: 14px; font-weight: 500; text-align: left; }
+
+.nav-item:hover { background: rgba(255, 255, 255, 0.05); }
+
+.nav-item.active { background: rgba(var(--md-sys-color-primary-rgb), 0.15); color: var(--md-sys-color-primary); }
+
+.sidebar-footer { padding-top: 20px; border-top: 1px solid var(--glass-border); text-align: center; font-size: 12px; color: var(--md-sys-color-outline); }
+
+.main-content { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
+
+.top-bar { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); border-bottom: 1px solid var(--glass-border); border-left: none; border-right: none; border-top: none; }
+
+.top-bar-actions { display: flex; align-items: center; gap: 20px; }
+
+.social-links { display: flex; gap: 12px; }
+
+.social-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); color: var(--md-sys-color-outline); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; text-decoration: none; border: 1px solid transparent; }
+
+@keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(var(--md-sys-color-primary-rgb), 0.4); } 70% { box-shadow: 0 0 0 6px rgba(var(--md-sys-color-primary-rgb), 0); } 100% { box-shadow: 0 0 0 0 rgba(var(--md-sys-color-primary-rgb), 0); } }
+
+.telegram-btn { animation: pulse-glow 3s infinite; }
+
+.telegram-btn:nth-child(2) { animation-delay: 1.5s; }
+
+.social-btn:hover { background: rgba(var(--md-sys-color-primary-rgb), 0.15); color: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(var(--md-sys-color-primary-rgb), 0.3); animation: none; }
+
+.divider-vertical { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.1); }
+
+.status-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--md-sys-color-outline); min-width: 120px; justify-content: flex-end; }
+
+.status-dot { width: 8px; height: 8px; background-color: #4caf50; border-radius: 50%; box-shadow: 0 0 8px rgba(76, 175, 80, 0.4); transition: background-color 0.3s, box-shadow 0.3s; }
+
+#content-area { padding: 32px; overflow-y: auto; height: calc(100vh - 64px); transition: opacity 0.25s ease-out, transform 0.25s ease-out; opacity: 1; transform: translateY(0); }
+
+#content-area.fade-out { opacity: 0; transform: translateY(10px); }
+
+.content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; align-content: start; }
+
+.mod-card, .method-card-new, .big-panel { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; overflow: hidden; position: relative; box-shadow: var(--glass-shadow); }
+
+.mod-card:hover, .method-card-new:hover, .big-panel:hover { transform: translateY(-4px); border-color: var(--md-sys-color-primary); background: rgba(var(--md-sys-color-primary-rgb), 0.05); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4); }
+
+.mod-card { display: flex; flex-direction: column; height: 100%; }
+
+.card-image { width: 100%; height: 160px; object-fit: cover; background-color: #2a2a2a; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+.card-content { padding: 16px; display: flex; flex-direction: column; flex-grow: 1; }
+
+.card-title { font-size: 18px; font-weight: 500; margin-bottom: 8px; color: var(--md-sys-color-on-surface); }
+
+.card-author { font-size: 12px; color: var(--md-sys-color-outline); margin-bottom: 4px; }
+
+.card-author span { color: var(--md-sys-color-primary); font-weight: 600; }
+
+.card-desc { font-size: 14px; color: var(--md-sys-color-outline); margin-bottom: 16px; flex-grow: 1; line-height: 1.4; }
+
+.install-btn { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border: none; padding: 10px 20px; border-radius: 20px; font-weight: 500; cursor: pointer; width: 100%; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.install-btn:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+.install-btn:active { transform: scale(0.98); }
+
+.install-btn:disabled, .install-btn.installed { background-color: rgba(255, 255, 255, 0.05); color: var(--md-sys-color-outline); cursor: default; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: none; opacity: 0.7; }
+
+.install-btn:disabled:hover, .install-btn.installed:hover { transform: none; box-shadow: none; background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.05); }
+
+.custom-color-picker { display: flex; flex-direction: column; gap: 20px; margin-top: 10px; }
+
+.picker-header { display: flex; align-items: center; gap: 20px; }
+
+.current-color-preview { width: 64px; height: 64px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: background-color 0.2s; }
+
+.picker-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: #fff; }
+
+.picker-info p { font-size: 13px; color: var(--md-sys-color-outline); }
+
+.picker-controls { display: flex; flex-direction: column; gap: 8px; }
+
+.picker-controls label { font-size: 12px; color: var(--md-sys-color-outline); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+.slider-hue { -webkit-appearance: none; width: 100%; height: 12px; border-radius: 6px; background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%); outline: none; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+
+.slider-hue::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid rgba(0,0,0,0.2); box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: pointer; margin-top: -1px; }
+
+.presets-grid { display: flex; gap: 12px; margin-top: 8px; }
+
+.color-preset { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); transition: transform 0.2s; }
+
+.color-preset:hover { transform: scale(1.2); border-color: #fff; }
+
+.reset-theme-btn { background: transparent; border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-surface); padding: 10px 20px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; transition: 0.2s; align-self: flex-start; }
+
+.reset-theme-btn:hover { border-color: var(--md-sys-color-primary); color: var(--md-sys-color-primary); background: rgba(var(--md-sys-color-primary-rgb), 0.1); }
+
+.full-height-container, .about-page-container { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 24px; }
+
+.big-panel { padding: 32px; display: flex; flex-direction: column; }
+
+.shrink-panel { flex-shrink: 0; }
+
+.grow-panel { flex-grow: 1; margin-bottom: 0; }
+
+.panel-title { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--md-sys-color-outline); margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+.methods-grid { display: flex; flex-direction: column; gap: 16px; flex-shrink: 0; }
+
+.method-card-new { padding: 20px 24px; display: flex; align-items: center; gap: 20px; transition: 0.2s ease; border: 1px solid var(--glass-border); }
+
+.active-method { background: linear-gradient(90deg, rgba(var(--md-sys-color-primary-rgb), 0.15), rgba(255,255,255,0.0)); border-color: var(--md-sys-color-primary); box-shadow: 0 0 20px rgba(0,0,0,0.2); }
+
+.active-method .method-icon { color: var(--md-sys-color-primary); background: rgba(var(--md-sys-color-primary-rgb), 0.15); }
+
+.active-method .method-content h3 { color: var(--md-sys-color-primary); }
+
+.method-icon { width: 48px; height: 48px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--md-sys-color-outline); transition: 0.2s; }
+
+.method-icon span { font-size: 24px; }
+
+.method-content { flex-grow: 1; }
+
+.method-content h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: #fff; transition: 0.2s; }
+
+.method-content p { font-size: 13px; color: var(--md-sys-color-outline); }
+
+.methods-info-list { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+
+.info-item { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+
+.info-content { display: flex; align-items: flex-start; gap: 16px; }
+
+.dash { color: var(--md-sys-color-primary); font-weight: 800; font-size: 18px; line-height: 1; margin-top: 2px; }
+
+.info-badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; align-self: flex-start; line-height: 1; margin-left: 24px; }
+
+.badge-auto { background: rgba(var(--md-sys-color-primary-rgb), 0.1); color: var(--md-sys-color-primary); border: 1px solid var(--md-sys-color-primary); opacity: 0.9; }
+
+.badge-sdls { background: rgba(76, 175, 80, 0.1); color: #81c784; border: 1px solid rgba(76, 175, 80, 0.3); }
+
+.badge-nosdls { background: rgba(255, 82, 82, 0.1); color: #ff8a80; border: 1px solid rgba(255, 82, 82, 0.3); }
+
+.info-item p { font-size: 15px; line-height: 1.6; color: #ececec; margin: 0; font-weight: 400; }
+
+.switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; }
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #36343b; border-radius: 32px; border: 2px solid #938f99; transition: .3s; }
+
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 6px; bottom: 6px; background-color: #938f99; border-radius: 50%; transition: .3s; }
+
+input:checked + .slider { background-color: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); }
+
+input:checked + .slider:before { transform: translateX(20px); background-color: var(--md-sys-color-on-primary); width: 24px; height: 24px; bottom: 2px; left: 2px; }
+
+.authors-list { display: flex; flex-direction: column; gap: 20px; }
+
+.author-row { display: flex; align-items: center; gap: 20px; padding: 10px; border-radius: 16px; transition: background 0.2s; }
+
+.author-row:hover { background: rgba(255,255,255,0.03); }
+
+.author-avatar-wrapper { flex-shrink: 0; width: 64px; height: 64px; position: relative; }
+
+.author-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: block; }
+
+.author-avatar-placeholder { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+.author-details { display: flex; flex-direction: column; justify-content: center; flex-grow: 1; }
+
+.author-details h3 { font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+
+.author-details .role { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--md-sys-color-primary); font-weight: 700; margin-bottom: 6px; display: inline-block; opacity: 0.9; }
+
+.author-details p { font-size: 13px; line-height: 1.4; color: #ccc; margin: 0; }
+
+.divider { height: 1px; background: rgba(255,255,255,0.05); width: 100%; margin: 0; }
+
+.app-details { display: flex; flex-direction: column; gap: 16px; height: 100%; }
+
+.app-header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+
+.app-version-badge { border: 1px solid var(--md-sys-color-primary); background: rgba(var(--md-sys-color-primary-rgb), 0.1); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; }
+
+.app-description-block { display: flex; flex-direction: column; gap: 8px; }
+
+.app-desc-text { font-size: 14px; line-height: 1.6; color: #e0e0e0; }
+
+.app-desc-text strong { color: #fff; font-weight: 600; }
+
+.app-features-list-new { list-style: none; margin: 12px 0 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.app-features-list-new li { font-size: 14px; color: var(--md-sys-color-outline); display: flex; align-items: center; gap: 10px; line-height: 1.4; }
+
+.app-features-list-new li::before { content: ""; display: block; width: 6px; height: 6px; border-radius: 50%; background-color: var(--md-sys-color-primary); flex-shrink: 0; }
+
+.app-features-list-new li strong { color: #fff; font-weight: 500; }
+
+.app-footer-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; }
+
+.app-credits { font-size: 13px; color: #666; }
+
+.fab-repair { position: fixed; bottom: 24px; right: 24px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.16); color: var(--md-sys-color-primary); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.75); cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; transition: 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+.fab-repair .material-symbols-outlined { font-size: 24px; }
+
+.fab-repair:hover { transform: translateY(-2px); background: rgba(var(--md-sys-color-primary-rgb), 0.12); border-color: var(--md-sys-color-primary); box-shadow: 0 10px 26px rgba(0, 0, 0, 0.85); }
+
+.fab-repair.hidden { display: none; }
+
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 1; visibility: visible; transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s; }
+
+.modal-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.modal-content { width: 480px; background: #141414; border-radius: 24px; padding: 32px; text-align: left; box-shadow: 0 20px 60px rgba(0,0,0,0.9); border: 1px solid var(--glass-border); transform: scale(1); transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1); display: flex; flex-direction: column; position: relative; }
+
+.modal-overlay.hidden .modal-content { transform: scale(0.95); }
+
+.modal-content h3 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 16px; letter-spacing: 0.5px; }
+
+.modal-close-icon { position: absolute; top: 20px; right: 20px; background: transparent; border: 1px solid transparent; color: var(--md-sys-color-outline); cursor: pointer; transition: 0.2s; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+.modal-close-icon:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: rgba(255,255,255,0.1); }
+
+.repair-list { max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; margin-top: 10px;}
+
+.repair-item { background: rgba(255,255,255,0.05); padding: 14px 20px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; transition: 0.2s; }
+
+.repair-item:hover { border-color: var(--md-sys-color-primary); background: rgba(var(--md-sys-color-primary-rgb), 0.1); }
+
+.repair-item span { font-size: 15px; color: #fff; font-weight: 500; }
+
+.repair-action-btn { background: transparent; border: none; color: var(--md-sys-color-outline); cursor: pointer; transition: 0.2s; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+
+.repair-action-btn .material-symbols-outlined { font-size: 22px; }
+
+.repair-action-btn:hover { color: var(--md-sys-color-primary); background: rgba(255,255,255,0.1); transform: scale(1.1); }
+
+.modal-subtitle { font-size: 14px; color: var(--md-sys-color-outline); margin-bottom: 10px; }
+
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+
+.info-label { font-size: 14px; color: var(--md-sys-color-outline); font-weight: 500; }
+
+.info-value { font-size: 15px; color: #ffffff; font-weight: 600; text-align: right; }
+
+.author-highlight { color: var(--md-sys-color-primary); }
+
+.info-description { font-size: 14px; line-height: 1.5; color: #e0e0e0; margin-bottom: 16px; max-height: 100px; overflow-y: auto; padding-right: 4px; }
+
+.info-price-tag { 
+    display: block; 
+    text-align: center; 
+    font-size: 18px; 
+    font-weight: 700; 
+    color: var(--md-sys-color-primary); 
+    padding: 10px; 
+    border: 1px solid var(--md-sys-color-primary); 
+    border-radius: 12px; 
+    margin-bottom: 12px; 
+    margin-top: 12px; 
+    background: rgba(var(--md-sys-color-primary-rgb), 0.05); 
 }
 
-function applyAccentColor(color) {
-    const div = document.createElement('div');
-    div.style.color = color;
-    document.body.appendChild(div);
-    const computed = window.getComputedStyle(div).color; 
-    document.body.removeChild(div);
-    const rgbMatch = computed.match(/\d+/g);
-    if (rgbMatch) {
-        const rgbVal = `${rgbMatch[0]}, ${rgbMatch[1]}, ${rgbMatch[2]}`;
-        document.documentElement.style.setProperty('--md-sys-color-primary', computed);
-        document.documentElement.style.setProperty('--md-sys-color-primary-rgb', rgbVal);
-        document.documentElement.style.setProperty('--md-sys-color-on-primary', '#1e1e1e');
-    }
+.modal-action-btn { 
+    width: 100%; 
+    padding: 14px; 
+    border-radius: 16px; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 15px; 
+    font-weight: 600; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 10px; 
+    transition: 0.2s; 
+    background-color: var(--md-sys-color-primary); 
+    color: var(--md-sys-color-on-primary); 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    margin-top: 0; 
 }
 
-function renderSettings() {
-    let col = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim();
-    contentArea.innerHTML = `
-        <div class="full-height-container">
-            <div class="big-panel grow-panel">
-                <h2 class="panel-title">Персонализация</h2>
-                <div class="custom-color-picker">
-                    <div class="picker-header">
-                        <div class="current-color-preview" id="color-preview" style="background-color: ${col};"></div>
-                        <div class="picker-info"><h3>Акцентный цвет</h3><p>Выберите основной цвет интерфейса</p></div>
-                    </div>
-                    <div class="picker-controls">
-                        <label>Оттенок</label>
-                        <input type="range" min="0" max="360" value="260" class="slider-hue" id="hue-slider">
-                        <label style="margin-top:16px;">Пресеты</label>
-                        <div class="presets-grid">
-                            <div class="color-preset" style="background: #d0bcff" data-col="#d0bcff"></div>
-                            <div class="color-preset" style="background: #ff4081" data-col="#ff4081"></div>
-                            <div class="color-preset" style="background: #00e676" data-col="#00e676"></div>
-                            <div class="color-preset" style="background: #2979ff" data-col="#2979ff"></div>
-                            <div class="color-preset" style="background: #ffea00" data-col="#ffea00"></div>
-                            <div class="color-preset" style="background: #e040fb" data-col="#e040fb"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="divider" style="margin: 24px 0;"></div>
-                <button class="reset-theme-btn" onclick="resetTheme()"><span class="material-symbols-outlined">restart_alt</span> Сбросить тему</button>
-            </div>
-        </div>`;
-    const hueSlider = document.getElementById('hue-slider');
-    const preview = document.getElementById('color-preview');
-    const presets = document.querySelectorAll('.color-preset');
-    if (hueSlider) {
-        hueSlider.addEventListener('input', (e) => {
-            const hue = e.target.value;
-            const color = `hsl(${hue}, 100%, 75%)`; 
-            applyAccentColor(color);
-            localStorage.setItem('accentColor', color);
-            preview.style.backgroundColor = color;
-        });
-    }
-    presets.forEach(p => {
-        p.addEventListener('click', () => {
-            const color = p.getAttribute('data-col');
-            applyAccentColor(color);
-            localStorage.setItem('accentColor', color);
-            preview.style.backgroundColor = color;
-        });
-    });
-}
+.modal-action-btn:hover { opacity: 0.9; box-shadow: 0 4px 15px rgba(var(--md-sys-color-primary-rgb), 0.3); transform: translateY(-1px); }
 
-window.resetTheme = function() { applyAccentColor('#d0bcff'); localStorage.removeItem('accentColor'); renderSettings(); }
+.modal-action-btn:active { transform: scale(0.98); }
 
-function checkEnvironment() {
-    const repairBtn = document.getElementById('global-repair-btn');
-    if (window.pywebview && repairBtn) repairBtn.classList.remove('hidden');
-    checkForUpdates(false); 
-}
+.view-hidden { display: none !important; }
 
-navItems.forEach(item => {
-    item.addEventListener('click', () => {
-        if(item.id === 'btn-check-updates') return;
-        navItems.forEach(n => n.classList.remove('active')); item.classList.add('active');
-        handleTabChange(item.getAttribute('data-tab'));
-    });
-});
+#install-view h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #ffffff; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-function handleTabChange(tab) {
-    contentArea.classList.add('fade-out');
-    setTimeout(() => {
-        contentArea.innerHTML = ''; contentArea.className = '';
-        if (tab === 'mods') { contentArea.classList.add('content-grid'); loadMods(); }
-        else if (tab === 'install-methods') renderInstallMethods();
-        else if (tab === 'authors') loadAuthors();
-        else if (tab === 'settings') renderSettings();
-        requestAnimationFrame(() => contentArea.classList.remove('fade-out'));
-    }, 250);
-}
+.progress-container { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
 
-async function loadMods() {
-    try {
-        const [modsResp, buyResp] = await Promise.all([
-            fetch(REPO_JSON_URL).catch(e => null),
-            fetch(REPO_BUY_URL).catch(() => ({ json: () => [] }))
-        ]);
-        if (!modsResp || !modsResp.ok) throw new Error("Не удалось загрузить каталог");
-        globalModsList = await modsResp.json(); 
-        globalBuyList = await buyResp.json();
-        globalInstalledIds = [];
-        if (window.pywebview) {
-            try { globalInstalledIds = await window.pywebview.api.check_installed_mods(globalModsList); } catch (e) {}
-        }
-        renderMods(globalModsList, globalInstalledIds, globalBuyList);
-    } catch (e) { 
-        contentArea.innerHTML = `<div class="empty-state"><p>Ошибка загрузки: ${e.message}</p></div>`; 
-    } finally {
-        setTimeout(() => { if(splash) splash.classList.add('fade-out'); }, 500);
-    }
-}
+.progress-bar { width: 0%; height: 100%; background: var(--md-sys-color-primary); border-radius: 4px; transition: width 0.2s ease-out; box-shadow: 0 0 15px var(--md-sys-color-primary); }
 
-function renderMods(mods, installedIds, buyList) {
-    contentArea.innerHTML = '';
-    if (!mods || mods.length === 0) { contentArea.innerHTML = '<p class="empty-text">Пусто.</p>'; return; }
-    mods.forEach(mod => {
-        let img = mod.image || ""; if(img && !img.startsWith('http')) img = REPO_BASE_URL + img;
-        if(!img) img = "https://via.placeholder.com/400x220/111/fff?text=No+Image";
-        const isInst = installedIds.includes(mod.id);
-        const buyInfo = buyList.find(b => b.id === mod.id);
-        let btnText = 'Установить';
-        let btnIcon = 'download';
-        let btnClass = 'install-btn';
-        let isDisabled = false;
-        let onClickAction = `startInstallProcess('${mod.id}', '${mod.name}', '${mod.file}')`;
-        if (buyInfo) {
-            if (buyInfo.status === 'preorder') {
-                btnText = 'Предзаказ'; btnIcon = 'schedule'; onClickAction = `openInfoModal('preorder', '${mod.id}')`;
-            } else {
-                btnText = 'Купить'; btnIcon = 'shopping_cart'; onClickAction = `openInfoModal('paid', '${mod.id}')`;
-            }
-        } else {
-            if (!window.pywebview) { btnText = 'Доступно в приложении'; isDisabled = true; } 
-            else if (isInst) { btnText = 'Уже установлен'; btnIcon = 'check'; btnClass = 'install-btn installed'; isDisabled = true; }
-        }
-        const card = document.createElement('div'); card.className = 'mod-card';
-        card.innerHTML = `
-            <img src="${img}" class="card-image" loading="lazy">
-            <div class="card-content">
-                <h3 class="card-title">${mod.name}</h3>
-                <p class="card-author">Автор: <span>${mod.author || "?"}</span></p>
-                <p class="card-desc">${mod.description || ""}</p>
-                <button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="${onClickAction}">
-                    <span class="material-symbols-outlined">${btnIcon}</span> ${btnText}
-                </button>
-            </div>`;
-        contentArea.appendChild(card);
-    });
-}
+.progress-info-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 
-function openInfoModal(type, modId) {
-    const buyItem = globalBuyList.find(b => b.id === modId);
-    const modItem = globalModsList.find(m => m.id === modId);
-    if (!buyItem || !modItem) return;
-    infoModal.classList.remove('hidden');
+#modal-status { font-size: 13px; color: #938f99; margin: 0; }
 
-    let statusTitle, btnText, btnIcon, showButton;
+#progress-percent { font-size: 13px; color: var(--md-sys-color-primary); font-weight: 700; }
 
-    if (type === 'preorder') {
-        statusTitle = 'Предзаказ';
-        btnText = 'ЗАКАЗАТЬ';
-        btnIcon = 'schedule';
-        showButton = true;
-    } else if (type === 'testing') {
-        statusTitle = 'В процессе....';
-        btnText = '';
-        btnIcon = '';
-        showButton = false;
-    } else {
-        statusTitle = 'Платный контент';
-        btnText = 'КУПИТЬ';
-        btnIcon = 'shopping_cart';
-        showButton = true;
-    }
+#success-view, #error-view { display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.4s ease; }
 
-    infoTitle.innerText = statusTitle;
-    infoDesc.innerHTML = `
-        <div class="info-row"><span class="info-label">Мод:</span><span class="info-value">${modItem.name}</span></div>
-        <div class="info-row"><span class="info-label">Автор:</span><span class="info-value author-highlight">${modItem.author}</span></div>
-        <div class="divider" style="margin: 16px 0;"></div>
-        <p class="info-description">${buyItem.desc || "Описание недоступно."}</p>
-        <div class="info-price-tag">${buyItem.price || "Цена договорная"}</div>
-    `;
+.success-icon { font-size: 64px; color: #4caf50; margin-bottom: 16px; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-    if (showButton) {
-        infoActionBtn.style.display = 'flex';
-        infoActionBtn.innerHTML = `${btnText} <span class="material-symbols-outlined">${btnIcon}</span>`;
-        infoActionBtn.onclick = () => { if (buyItem.link) window.open(buyItem.link, '_blank'); };
-    } else {
-        infoActionBtn.style.display = 'none';
-    }
-}
+.error-icon { font-size: 64px; color: #ff5252; margin-bottom: 16px; animation: shake 0.5s ease-in-out; }
 
-if(infoCloseBtn) infoCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+#success-view h3, #error-view h3 { font-size: 20px; color: var(--md-sys-color-on-surface); margin-bottom: 8px; }
 
-function renderInstallMethods() {
-    contentArea.innerHTML = `
-        <div class="full-height-container">
-            <div class="methods-grid">
-                <div class="method-card-new ${currentInstallMethod === 'auto' ? 'active-method' : ''}" id="card-auto"><div class="method-icon"><span class="material-symbols-outlined">smart_toy</span></div><div class="method-content"><h3>Автоматически</h3><p>Сам найдет папку packs</p></div><label class="switch"><input type="checkbox" id="toggle-auto" ${currentInstallMethod === 'auto' ? 'checked' : ''}><span class="slider"></span></label></div>
-                <div class="method-card-new ${currentInstallMethod === 'sdls' ? 'active-method' : ''}" id="card-sdls"><div class="method-icon"><span class="material-symbols-outlined">folder_zip</span></div><div class="method-content"><h3>sDLS Метод</h3><p>Ручной режим (Documents)</p></div><label class="switch"><input type="checkbox" id="toggle-sdls" ${currentInstallMethod === 'sdls' ? 'checked' : ''}><span class="slider"></span></label></div>
-                <div class="method-card-new ${currentInstallMethod === 'no_sdls' ? 'active-method' : ''}" id="card-nosdls"><div class="method-icon"><span class="material-symbols-outlined">folder_open</span></div><div class="method-content"><h3>Стандартный (No-SDLS)</h3><p>Прямая замена файлов</p></div><label class="switch"><input type="checkbox" id="toggle-nosdls" ${currentInstallMethod === 'no_sdls' ? 'checked' : ''}><span class="slider"></span></label></div>
-            </div>
-            <div class="big-panel grow-panel"><h2 class="panel-title">Справка по методам</h2><div class="methods-info-list"><div class="info-item"><div class="info-content"><span class="dash">—</span><p>Обычно не нужен, но если ты не знаешь что конкретно щас, микропатч или просто обнова, тыкни тумблер, лаунчер поможет.</p></div><span class="info-badge badge-auto">Автоматически</span></div><div class="divider"></div><div class="info-item"><div class="info-content"><span class="dash">—</span><p>Если ты уже в курсе что у игры есть микропатч, тыкай сюда и устаналивай.</p></div><span class="info-badge badge-sdls">sDLS Метод</span></div><div class="divider"></div><div class="info-item"><div class="info-content"><span class="dash">—</span><p>Тоже самое что и второй, только при условии что это обычная обнова :3</p></div><span class="info-badge badge-nosdls">Стандартный</span></div></div></div>
-        </div>`;
-    const tA = document.getElementById('toggle-auto'), tS = document.getElementById('toggle-sdls'), tN = document.getElementById('toggle-nosdls');
-    const cA = document.getElementById('card-auto'), cS = document.getElementById('card-sdls'), cN = document.getElementById('card-nosdls');
-    function upd(m) { currentInstallMethod = m; cA.classList.remove('active-method'); cS.classList.remove('active-method'); cN.classList.remove('active-method'); if(m==='auto')cA.classList.add('active-method'); if(m==='sdls')cS.classList.add('active-method'); if(m==='no_sdls')cN.classList.add('active-method'); }
-    tA.addEventListener('change', ()=>{if(tA.checked){tS.checked=false;tN.checked=false;upd('auto');}else tA.checked=true;});
-    tS.addEventListener('change', ()=>{if(tS.checked){tA.checked=false;tN.checked=false;upd('sdls');}else tS.checked=true;});
-    tN.addEventListener('change', ()=>{if(tN.checked){tA.checked=false;tS.checked=false;upd('no_sdls');}else tN.checked=true;});
-}
+.error-text { font-size: 15px; color: #938f99; text-align: center; line-height: 1.4; }
 
-async function loadAuthors() {
-    contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
-    try {
-        const response = await fetch(REPO_AUTHORS_URL);
-        const authors = await response.json();
-        let authorsListHtml = '';
-        authors.forEach((author) => {
-            let avatarUrl = author.avatar || "";
-            if (avatarUrl && !avatarUrl.startsWith('http')) avatarUrl = REPO_BASE_URL + avatarUrl;
-            const firstLetter = author.name ? author.name.charAt(0).toUpperCase() : "?";
-            authorsListHtml += `
-                <div class="author-row">
-                    <div class="author-avatar-wrapper">
-                        <img src="${avatarUrl}" alt="${author.name}" class="author-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="author-avatar-placeholder" style="background-color: rgba(var(--md-sys-color-primary-rgb), 0.2); color: var(--md-sys-color-primary); display: none;">${firstLetter}</div>
-                    </div>
-                    <div class="author-details"><h3>${author.name}</h3><span class="role">${author.role}</span><p>${author.bio || ""}</p></div>
-                </div>`;
-        });
-        contentArea.innerHTML = `
-            <div class="about-page-container">
-                <div class="big-panel authors-panel"><h2 class="panel-title">Команда проекта</h2><div class="authors-list">${authorsListHtml}</div></div>
-                <div class="big-panel app-info-panel"><h2 class="panel-title">О приложении</h2><div class="app-details"><div class="app-header-row"><span class="app-version-badge">LOADER ASTR v1.0.0 Beta</span><span style="font-size: 13px; color: #666;">Build: 2025.11.25</span></div><div class="app-description-block"><p class="app-desc-text">Это универсальный лаунчер-загрузчик модов в игру <strong>Tanks Blitz</strong>.</p><ul class="app-features-list-new"><li>Учитывает <strong>sDLS</strong></li><li>Поддерживает обычные обновления</li><li>Автоматические бэкапы</li><li>Удобный каталог модификаций</li><li>Быстрое восстановление игры</li></ul></div><div style="flex-grow: 1;"></div><div class="app-footer-row"><p class="app-credits">(C) Launcher 2025</p></div></div></div>
-            </div>`;
-    } catch (error) { contentArea.innerHTML = `<p style="color:#ff5252;">Ошибка авторов.</p>`; }
-}
+@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-function startInstallProcess(id, name, url) {
-    if(!window.pywebview) return;
-    if(url && !url.startsWith('http')) url = REPO_BASE_URL + url;
-    installView.classList.remove('view-hidden'); successView.classList.add('view-hidden'); errorView.classList.add('view-hidden');
-    progressBar.style.width = "0%"; progressPercent.innerText = "0%"; modalTitle.innerText = name; modalStatus.innerText = "Подготовка...";
-    modal.classList.remove('hidden');
-    window.pywebview.api.install_mod(id, url, currentInstallMethod);
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-if(modalCloseBtn) modalCloseBtn.addEventListener('click', () => { if(window.pywebview) window.pywebview.api.cancel_install(); closeModal(); });
-function closeModal() { modal.classList.add('hidden'); }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
 
-window.updateRealProgress = (p, t) => { progressBar.style.width = p + "%"; progressPercent.innerText = p + "%"; modalStatus.innerText = t; }
-window.finishInstall = (s, m) => {
-    if(s) { installView.classList.add('view-hidden'); successView.classList.remove('view-hidden'); setTimeout(() => { closeModal(); loadMods(); }, 2000); }
-    else { if(m==="Canceled"){closeModal();} else { installView.classList.add('view-hidden'); errorView.classList.remove('view-hidden'); errorMessage.innerText = m; setTimeout(closeModal, 3000); } }
-}
+.loader-spinner { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--md-sys-color-outline); }
 
-function openRepairModal() {
-    const installedMods = globalModsList.filter(m => globalInstalledIds.includes(m.id));
-    repairList.innerHTML = '';
-    if (installedMods.length === 0) repairList.innerHTML = '<p class="empty-text">Нет установленных модов для починки.</p>';
-    else {
-        installedMods.forEach(mod => {
-            const item = document.createElement('div'); item.className = 'repair-item';
-            item.innerHTML = `<span>${mod.name}</span><button class="repair-action-btn" onclick="restoreMod('${mod.id}', '${mod.name}')"><span class="material-symbols-outlined">build</span></button>`;
-            repairList.appendChild(item);
-        });
-    }
-    repairModal.classList.remove('hidden');
-}
+.spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-left-color: var(--md-sys-color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
 
-async function restoreMod(id, name) {
-    repairModal.classList.add('hidden');
-    installView.classList.remove('view-hidden'); successView.classList.add('view-hidden'); errorView.classList.add('view-hidden');
-    progressBar.style.width = "100%"; progressPercent.innerText = ""; modalTitle.innerText = "Восстановление..."; modalStatus.innerText = "Обработка...";
-    modal.classList.remove('hidden');
-    const res = await window.pywebview.api.restore_mod(id);
-    if (res.success) finishInstall(true, res.message); else finishInstall(false, res.message);
-}
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--md-sys-color-outline); animation: popIn 0.5s ease-out; }
 
-if(repairCloseBtn) repairCloseBtn.addEventListener('click', () => repairModal.classList.add('hidden'));
-const rb = document.getElementById('global-repair-btn'); if(rb) rb.addEventListener('click', openRepairModal);
+.empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; color: var(--md-sys-color-primary); }
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background-color: #333; color: #fff; padding: 12px 24px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 3000; font-size: 14px; opacity: 1; transition: opacity 0.3s, transform 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+
+.toast.hidden { opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
