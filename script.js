@@ -89,9 +89,10 @@ async function checkForUpdates(manual = false) {
         
         if (res.available) {
             newUpdateUrl = res.url;
-            updateVerSpan.innerText = "v" + res.version;
-            updateLogP.innerText = res.changelog;
-            updateSizeSpan.innerText = res.size || "Неизвестно";
+            if(updateVerSpan) updateVerSpan.innerText = "v" + res.version;
+            if(updateLogP) updateLogP.innerText = res.changelog;
+            if(updateSizeSpan) updateSizeSpan.innerText = res.size || "MB";
+            
             updateModal.classList.remove('hidden');
         } else {
             if (manual) showToast(res.message || "Обновлений не найдено");
@@ -101,7 +102,7 @@ async function checkForUpdates(manual = false) {
     } finally {
         if(manual && btnCheckUpdates) {
             const icon = btnCheckUpdates.querySelector('span');
-            icon.style.animation = "none";
+            if(icon) icon.style.animation = "none";
         }
     }
 }
@@ -170,12 +171,12 @@ function renderSettings() {
                         <input type="range" min="0" max="360" value="260" class="slider-hue" id="hue-slider">
                         <label style="margin-top:16px;">Пресеты</label>
                         <div class="presets-grid">
-                            <div class="color-preset" style="background: #d0bcff" data-col="#d0bcff"></div>
-                            <div class="color-preset" style="background: #ff4081" data-col="#ff4081"></div>
-                            <div class="color-preset" style="background: #00e676" data-col="#00e676"></div>
-                            <div class="color-preset" style="background: #2979ff" data-col="#2979ff"></div>
-                            <div class="color-preset" style="background: #ffea00" data-col="#ffea00"></div>
-                            <div class="color-preset" style="background: #e040fb" data-col="#e040fb"></div>
+                            <div class="color-preset" style="background: #d0bcff" onclick="setTheme('#d0bcff')"></div>
+                            <div class="color-preset" style="background: #ff4081" onclick="setTheme('#ff4081')"></div>
+                            <div class="color-preset" style="background: #00e676" onclick="setTheme('#00e676')"></div>
+                            <div class="color-preset" style="background: #2979ff" onclick="setTheme('#2979ff')"></div>
+                            <div class="color-preset" style="background: #ffea00" onclick="setTheme('#ffea00')"></div>
+                            <div class="color-preset" style="background: #e040fb" onclick="setTheme('#e040fb')"></div>
                         </div>
                     </div>
                 </div>
@@ -185,24 +186,18 @@ function renderSettings() {
         </div>`;
     const hueSlider = document.getElementById('hue-slider');
     const preview = document.getElementById('color-preview');
-    const presets = document.querySelectorAll('.color-preset');
     if (hueSlider) {
         hueSlider.addEventListener('input', (e) => {
             const hue = e.target.value;
             const color = `hsl(${hue}, 100%, 75%)`; 
-            applyAccentColor(color);
-            localStorage.setItem('accentColor', color);
-            preview.style.backgroundColor = color;
+            setTheme(color);
         });
     }
-    presets.forEach(p => {
-        p.addEventListener('click', () => {
-            const color = p.getAttribute('data-col');
-            applyAccentColor(color);
-            localStorage.setItem('accentColor', color);
-            preview.style.backgroundColor = color;
-        });
-    });
+}
+
+window.setTheme = function(col) {
+    applyAccentColor(col);
+    localStorage.setItem('accentColor', col);
 }
 
 window.resetTheme = function() { applyAccentColor('#d0bcff'); localStorage.removeItem('accentColor'); renderSettings(); }
@@ -260,10 +255,8 @@ function renderMods(mods, installedIds, buyList) {
     mods.forEach(mod => {
         let img = mod.image || ""; if(img && !img.startsWith('http')) img = REPO_BASE_URL + img;
         if(!img) img = "https://via.placeholder.com/400x220/111/fff?text=No+Image";
-        
         const isInst = installedIds.includes(mod.id);
         const buyInfo = buyList.find(b => b.id === mod.id);
-        
         let btnText = 'Установить';
         let btnIcon = 'download';
         let btnClass = 'install-btn';
@@ -366,6 +359,7 @@ async function loadAuthors() {
 
 function startInstallProcess(id, name, url) {
     if(!window.pywebview) return;
+    if(url && !url.startsWith('http')) url = REPO_BASE_URL + url;
     installView.classList.remove('view-hidden'); successView.classList.add('view-hidden'); errorView.classList.add('view-hidden');
     progressBar.style.width = "0%"; progressPercent.innerText = "0%"; modalTitle.innerText = name; modalStatus.innerText = "Подготовка...";
     modal.classList.remove('hidden');
