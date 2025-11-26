@@ -269,6 +269,8 @@ function renderMods(mods, installedIds, buyList) {
         if (buyInfo) {
             if (buyInfo.status === 'preorder') {
                 btnText = 'Предзаказ'; btnIcon = 'schedule'; onClickAction = `openInfoModal('preorder', '${mod.id}')`;
+            } else if (buyInfo.status === 'BT') {
+                btnText = 'Временно недоступен'; btnIcon = 'schedule'; onClickAction = `openInfoModal('testing', '${mod.id}')`;
             } else {
                 btnText = 'Купить'; btnIcon = 'shopping_cart'; onClickAction = `openInfoModal('paid', '${mod.id}')`;
             }
