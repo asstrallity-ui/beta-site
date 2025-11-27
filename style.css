@@ -144,6 +144,7 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
+    overflow: hidden; /* Важно для контейнера приложения */
 }
 
 .glass,
@@ -165,6 +166,7 @@ body {
     border-bottom: none;
     border-top: none;
     box-shadow: 5px 0 30px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0; /* Не даем сжиматься */
 }
 
 .logo-area {
@@ -239,7 +241,8 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
-    min-height: 0; /* критично для внутреннего скролла */
+    height: 100%;      /* Обязательно 100% */
+    overflow: hidden;  /* Обрезаем всё, что торчит за пределы */
 }
 
 .top-bar {
@@ -254,6 +257,7 @@ body {
     border-left: none;
     border-right: none;
     border-top: none;
+    flex-shrink: 0; /* Топ-бар не сжимается */
 }
 
 #page-title {
@@ -349,17 +353,21 @@ body {
 
 #content-area {
     padding: 32px;
-    overflow-y: auto;
+    
+    /* Flex settings for scrolling */
+    flex: 1;          /* Занимает всё доступное пространство */
+    min-height: 0;    /* Критично для работы скролла внутри flex-контейнера */
+    overflow-y: auto; /* Включаем вертикальный скролл */
     overflow-x: hidden;
-    flex: 1;        /* занимает всё оставшееся место под топбаром */
-    min-height: 0;  /* даём блоку сжаться и включить скролл */
+    height: auto;     /* Отключаем фиксированную высоту */
+
     transition: opacity 0.25s ease-out, transform 0.25s ease-out;
     opacity: 1;
     transform: translateY(0);
 
     /* кастомный скролл для Firefox */
     scrollbar-width: thin;
-    scrollbar-color: rgba(var(--md-sys-color-primary-rgb), 0.85) transparent;
+    scrollbar-color: rgba(var(--md-sys-color-primary-rgb), 0.8) transparent;
 }
 
 #content-area.fade-out {
@@ -367,7 +375,7 @@ body {
     transform: translateY(10px);
 }
 
-/* кастомный скролл для Chromium/WebKit (в т.ч. PyQt WebEngine) */
+/* кастомный скролл для Chromium/WebKit */
 #content-area::-webkit-scrollbar {
     width: 10px;
 }
@@ -377,15 +385,15 @@ body {
 }
 
 #content-area::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.2); /* Чуть светлее для видимости */
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 #content-area:hover::-webkit-scrollbar-thumb {
-    background: rgba(var(--md-sys-color-primary-rgb), 0.9);
+    background: rgba(var(--md-sys-color-primary-rgb), 1);
 }
 
 #content-area::-webkit-scrollbar-corner {
@@ -399,6 +407,8 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
     align-content: start;
+    /* Убираем лишние padding-bottom, если были */
+    padding-bottom: 32px;
 }
 
 .mod-card,
@@ -550,7 +560,7 @@ body {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 4px;
-    color: #fff;
+    color: #ffffff;
 }
 
 .picker-info p {
@@ -597,7 +607,7 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #fff;
+    background: #ffffff;
     border: 2px solid rgba(0, 0, 0, 0.2);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     cursor: pointer;
@@ -621,7 +631,7 @@ body {
 
 .color-preset:hover {
     transform: scale(1.2);
-    border-color: #fff;
+    border-color: #ffffff;
 }
 
 .reset-theme-btn {
@@ -745,7 +755,7 @@ body {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 4px;
-    color: #fff;
+    color: #ffffff;
     transition: 0.2s;
 }
 
@@ -956,7 +966,7 @@ input:checked + .slider:before {
 .author-details p {
     font-size: 13px;
     line-height: 1.4;
-    color: #ccc;
+    color: #cccccc;
     margin: 0;
 }
 
@@ -986,7 +996,7 @@ input:checked + .slider:before {
 .app-version-badge {
     border: 1px solid var(--md-sys-color-primary);
     background: rgba(var(--md-sys-color-primary-rgb), 0.1);
-    color: #fff;
+    color: #ffffff;
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 13px;
@@ -1007,7 +1017,7 @@ input:checked + .slider:before {
 }
 
 .app-desc-text strong {
-    color: #fff;
+    color: #ffffff;
     font-weight: 600;
 }
 
@@ -1040,7 +1050,7 @@ input:checked + .slider:before {
 }
 
 .app-features-list-new li strong {
-    color: #fff;
+    color: #ffffff;
     font-weight: 500;
 }
 
@@ -1054,7 +1064,7 @@ input:checked + .slider:before {
 
 .app-credits {
     font-size: 13px;
-    color: #666;
+    color: #666666;
 }
 
 /* REPAIR FAB */
@@ -1140,7 +1150,7 @@ input:checked + .slider:before {
 .modal-content h3 {
     font-size: 20px;
     font-weight: 600;
-    color: #fff;
+    color: #ffffff;
     margin-bottom: 16px;
     letter-spacing: 0.5px;
 }
@@ -1167,7 +1177,7 @@ input:checked + .slider:before {
 
 .modal-close-icon:hover {
     background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    color: #ffffff;
     border-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -1201,7 +1211,7 @@ input:checked + .slider:before {
 
 .repair-item span {
     font-size: 15px;
-    color: #fff;
+    color: #ffffff;
     font-weight: 500;
 }
 
@@ -1499,8 +1509,8 @@ input:checked + .slider:before {
     bottom: 32px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #333;
-    color: #fff;
+    background-color: #333333;
+    color: #ffffff;
     padding: 12px 24px;
     border-radius: 50px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
