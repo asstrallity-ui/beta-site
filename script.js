@@ -151,6 +151,9 @@ function applyAccentColor(color) {
 }
 
 function renderSettings() {
+    // ОТКЛЮЧАЕМ СЕТКУ ДЛЯ ЭТОЙ ВКЛАДКИ
+    contentArea.classList.remove('content-grid');
+    
     let col = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim();
     contentArea.innerHTML = `
         <div class="full-height-container">
@@ -228,6 +231,8 @@ navItems.forEach(item => {
 });
 
 async function loadMods() {
+    // ВКЛЮЧАЕМ СЕТКУ ДЛЯ КАТАЛОГА (ВАЖНО)
+    contentArea.classList.add('content-grid');
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
     try {
         const [modsResp, buyResp] = await Promise.all([
@@ -253,16 +258,15 @@ async function loadMods() {
 }
 
 function renderMods(mods, installedIds, buyList) {
+    // ГАРАНТИРУЕМ, ЧТО СЕТКА ВКЛЮЧЕНА
+    contentArea.classList.add('content-grid');
     contentArea.innerHTML = '';
     if (!mods || mods.length === 0) { 
         contentArea.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined empty-icon">search_off</span><p>Пусто.</p></div>'; 
         return; 
     }
     
-    // СОЗДАЕМ ОБЕРТКУ-СЕТКУ (ВАЖНОЕ ИЗМЕНЕНИЕ)
-    const grid = document.createElement('div');
-    grid.className = 'content-grid';
-
+    // ВЕРНУЛИСЬ К ПРЯМОМУ ДОБАВЛЕНИЮ (ТАК КАК САМ CONTENT-AREA ЭТО СЕТКА)
     mods.forEach(mod => {
         let img = mod.image || "";
         if(img && !img.startsWith('http')) img = REPO_BASE_URL + img;
@@ -306,12 +310,8 @@ function renderMods(mods, installedIds, buyList) {
                 </button>
             </div>
         `;
-        // Добавляем карточку в СЕТКУ, а не напрямую в область
-        grid.appendChild(card);
+        contentArea.appendChild(card);
     });
-    
-    // Добавляем готовую сетку в основную область
-    contentArea.appendChild(grid);
 }
 
 function openInfoModal(type, modId) {
@@ -361,6 +361,8 @@ function openInfoModal(type, modId) {
 if(infoCloseBtn) infoCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
 
 function renderInstallMethods() {
+    // ОТКЛЮЧАЕМ СЕТКУ
+    contentArea.classList.remove('content-grid');
     contentArea.innerHTML = `
         <div class="full-height-container">
             <div class="methods-grid">
@@ -427,6 +429,8 @@ function renderInstallMethods() {
 }
 
 async function loadAuthors() {
+    // ОТКЛЮЧАЕМ СЕТКУ
+    contentArea.classList.remove('content-grid');
     contentArea.innerHTML = `<div class="loader-spinner"><div class="spinner"></div></div>`;
     try {
         const response = await fetch(REPO_AUTHORS_URL);
