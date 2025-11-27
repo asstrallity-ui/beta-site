@@ -3,12 +3,8 @@ const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
 const REPO_BUY_URL = 'https://rh-archive.ru/mods_files_github/buy.json';
 const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
 
-// Элементы
 const contentArea = document.getElementById('content-area');
 const navItems = document.querySelectorAll('.nav-item');
-const splash = document.getElementById('splash-screen');
-
-// Модалки и UI
 const modal = document.getElementById('progress-modal');
 const installView = document.getElementById('install-view');
 const successView = document.getElementById('success-view');
@@ -27,6 +23,7 @@ const infoTitle = document.getElementById('info-modal-title');
 const infoDesc = document.getElementById('info-modal-desc');
 const infoActionBtn = document.getElementById('info-modal-action');
 const infoCloseBtn = document.getElementById('info-close-btn');
+const splash = document.getElementById('splash-screen');
 
 // Обновление
 const btnCheckUpdates = document.getElementById('btn-check-updates');
@@ -44,33 +41,16 @@ let globalBuyList = [];
 let globalInstalledIds = [];
 let newUpdateUrl = "";
 
-// === ЛОГИКА ПЛАВНОГО ПОЯВЛЕНИЯ ИКОНОК ===
-// 1. Отслеживаем загрузку шрифтов, чтобы сразу показать иконки
-document.fonts.ready.then(() => {
-    document.body.classList.add('fonts-loaded');
-});
-
-// 2. Дополнительно, при полной загрузке страницы (картинки, стили)
-window.addEventListener('load', () => {
-    document.body.classList.add('fonts-loaded');
-    // Убираем сплэш через полсекунды, чтобы пользователь увидел интерфейс без рывков
-    setTimeout(() => {
-        if(splash) splash.classList.add('fade-out');
-    }, 500);
-});
-
-// === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАПУСКЕ ===
 document.addEventListener('DOMContentLoaded', () => {
-    // Восстанавливаем цвет темы
+    // Восстанавливаем цвет
     const savedColor = localStorage.getItem('accentColor');
     if (savedColor) applyAccentColor(savedColor);
     else applyAccentColor('#d0bcff');
 
-    // Ожидание PyWebView
+    // Ждем PyWebView
     let attempts = 0;
     const interval = setInterval(() => {
         attempts++;
-        // Если pywebview готов или прошло слишком много времени (отладка в браузере)
         if (window.pywebview || attempts > 50) {
             checkEnvironment();
             loadMods();
@@ -82,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkPing, 5000);
 });
 
-// Если pywebview сам сообщил о готовности
 window.addEventListener('pywebviewready', checkEnvironment);
 
 function showToast(msg) {
@@ -168,54 +147,23 @@ async function checkPing() {
     }
 }
 
-// === UI LOGIC (TABS) ===
-const navButtons = document.querySelectorAll('.nav-item');
-navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const tab = btn.getAttribute('data-tab');
-        if (!tab) return;
-
-        navButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        handleTabChange(tab);
-    });
-});
-
-function handleTabChange(tab) {
-    // Анимация ухода
-    contentArea.classList.add('fade-out');
-
-    setTimeout(() => {
-        if (tab === 'mods') {
-            document.getElementById('page-title').innerText = 'Каталог модификаций';
-            loadMods(); 
-        } else if (tab === 'install-methods') {
-            document.getElementById('page-title').innerText = 'Методы установки';
-            renderMethods();
-        } else if (tab === 'authors') {
-            document.getElementById('page-title').innerText = 'Авторы';
-            renderAuthors();
-        } else if (tab === 'settings') {
-            document.getElementById('page-title').innerText = 'Персонализация';
-            renderSettings();
-        }
-        contentArea.classList.remove('fade-out');
-    }, 250);
-}
-
 function applyAccentColor(color) {
+    // Проверка валидности цвета через временный элемент (самый надежный способ)
     const div = document.createElement('div');
     div.style.color = color;
     document.body.appendChild(div);
     const computed = window.getComputedStyle(div).color; // "rgb(r, g, b)"
     document.body.removeChild(div);
 
+    // Парсим rgb
     const rgbMatch = computed.match(/\d+/g);
     if (rgbMatch) {
         const rgbVal = `${rgbMatch[0]}, ${rgbMatch[1]}, ${rgbMatch[2]}`;
         document.documentElement.style.setProperty('--md-sys-color-primary', computed);
         document.documentElement.style.setProperty('--md-sys-color-primary-rgb', rgbVal);
+        
+        // Для текста на кнопке делаем контрастный (черный или белый) в зависимости от яркости?
+        // В Material 3 обычно OnPrimary отличается, но пока ставим темный:
         document.documentElement.style.setProperty('--md-sys-color-on-primary', '#1e1e1e'); 
     }
 }
@@ -283,19 +231,30 @@ async function checkEnvironment() {
     if(!window.pywebview) return;
     try {
         const env = await window.pywebview.api.get_env_info();
+        
+        // Проверяем installed ids
         globalInstalledIds = env.installed_mods || [];
+
+        // Проверяем geo
         if (env.geo_blocked) {
             const gm = document.getElementById('geo-modal');
             if(gm) gm.classList.remove('hidden');
         }
+        
+        // Обновляем метод
+        // (По умолчанию auto, но можно расширить логику)
+        
     } catch (e) {
         console.error(e);
     }
 }
 
 async function loadMods() {
+    // Если мы уже загружали моды, можно не показывать спиннер, а сразу обновить?
+    // Но пока оставим спиннер для красоты
     contentArea.innerHTML = '<div class="loader-spinner"><div class="spinner"></div><p>Загрузка каталога...</p></div>';
     try {
+        // Параллельная загрузка модов и авторов и buy.json
         const [modsRes, authorsRes, buyRes] = await Promise.all([
             fetch(REPO_JSON_URL),
             fetch(REPO_AUTHORS_URL),
@@ -306,13 +265,17 @@ async function loadMods() {
         const modsData = await modsRes.json();
         globalModsList = modsData.mods || [];
         
-        // Авторы (опционально загружаются, не критично)
+        // Авторы (опционально)
+        if (authorsRes.ok) {
+            // Можно сохранить авторов глобально, если нужно
+        }
+
         if (buyRes.ok) {
             const buyData = await buyRes.json();
             globalBuyList = buyData || [];
         }
 
-        // Также нужно обновить список установленных через API (на случай изменений)
+        // Также нужно обновить список установленных через API
         if (window.pywebview) {
              const env = await window.pywebview.api.get_env_info();
              globalInstalledIds = env.installed_mods || [];
@@ -320,8 +283,15 @@ async function loadMods() {
 
         renderCatalog(globalModsList, globalInstalledIds, globalBuyList);
 
+        // Убираем сплэш, если он еще висит (только при первой загрузке)
+        if(splash && !splash.classList.contains('fade-out')) {
+            splash.classList.add('fade-out');
+        }
+
     } catch (e) {
         contentArea.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined empty-icon">wifi_off</span><h3>Ошибка загрузки</h3><p>${e.message}</p></div>`;
+        // Даже если ошибка, убираем сплэш, чтобы юзер увидел ошибку
+        if(splash) splash.classList.add('fade-out');
     }
 }
 
@@ -353,6 +323,9 @@ function renderCatalog(mods, installedIds, buyList) {
                 btnIcon = 'schedule';
                 onClickAction = `openInfoModal('preorder', '${mod.id}')`;
             } else if (buyInfo.status === 'BT') {
+                 // === ЛОГИКА BT ===
+                 // Если установлен -> значит тестер, можно переустановить
+                 // Если НЕ установлен -> кнопка недоступна
                  if (isInst) {
                      btnText = 'Обновить (BT)';
                      btnIcon = 'sync';
@@ -363,6 +336,7 @@ function renderCatalog(mods, installedIds, buyList) {
                      onClickAction = `openInfoModal('testing', '${mod.id}')`;
                  }
             } else {
+                // paid
                 btnText = 'Купить';
                 btnIcon = 'shopping_cart';
                 onClickAction = `openInfoModal('paid', '${mod.id}')`;
@@ -398,6 +372,38 @@ function renderCatalog(mods, installedIds, buyList) {
     });
 }
 
+// === UI LOGIC ===
+const navButtons = document.querySelectorAll('.nav-item');
+navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-tab');
+        if (!tab) return;
+
+        navButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Анимация ухода
+        contentArea.classList.add('fade-out');
+
+        setTimeout(() => {
+            if (tab === 'mods') {
+                document.getElementById('page-title').innerText = 'Каталог модификаций';
+                loadMods(); 
+            } else if (tab === 'install-methods') {
+                document.getElementById('page-title').innerText = 'Методы установки';
+                renderMethods();
+            } else if (tab === 'authors') {
+                document.getElementById('page-title').innerText = 'Авторы';
+                renderAuthors();
+            } else if (tab === 'settings') {
+                document.getElementById('page-title').innerText = 'Персонализация';
+                renderSettings();
+            }
+            contentArea.classList.remove('fade-out');
+        }, 250);
+    });
+});
+
 window.openInfoModal = (type, modId) => {
     const buyItem = globalBuyList.find(b => b.id === modId);
     if (!buyItem) return;
@@ -430,6 +436,7 @@ if(infoCloseBtn) infoCloseBtn.addEventListener('click', () => infoModal.classLis
 
 
 function renderMethods() {
+    // Рендерим статический HTML для методов
     contentArea.innerHTML = `
     <div class="full-height-container">
         <div class="big-panel shrink-panel">
@@ -520,7 +527,7 @@ function renderMethods() {
 
 window.selectMethod = (m) => {
     currentInstallMethod = m;
-    renderMethods(); 
+    renderMethods(); // перерисовать чтобы обновить active-method
 }
 
 window.toggleSDLS = (el) => {
@@ -730,6 +737,7 @@ async function checkGeoRestriction() {
     }
     try {
         const res = await window.pywebview.api.check_connection_status(); 
+        // { status: "blocked", country: "UA" }
         if (res && res.status === 'blocked') {
             if (geoModal) {
                 geoModal.classList.remove('hidden');
