@@ -2,14 +2,11 @@ const REPO_JSON_URL = 'https://rh-archive.ru/mods_files_github/mods.json';
 const REPO_AUTHORS_URL = 'https://rh-archive.ru/mods_files_github/authors.json';
 const REPO_BUY_URL = 'https://rh-archive.ru/mods_files_github/buy.json';
 const REPO_BASE_URL = 'https://rh-archive.ru/mods_files_github/';
+// Новая ссылка для YouTube
 const REPO_YOUTUBE_URL = 'https://rh-archive.ru/mods_files_github/youtube.json';
 
 const contentArea = document.getElementById('content-area');
-// Nav Items
-const navCatalog = document.getElementById('nav-catalog');
-const navYoutube = document.getElementById('nav-youtube');
-const navSettings = document.getElementById('nav-settings');
-
+const navItems = document.querySelectorAll('.nav-item');
 const modal = document.getElementById('progress-modal');
 const installView = document.getElementById('install-view');
 const successView = document.getElementById('success-view');
@@ -47,28 +44,50 @@ let currentInstallMethod = 'auto';
 let globalModsList = [];
 let globalBuyList = [];
 let globalInstalledIds = [];
-let globalYouTubeData = [];
 let newUpdateUrl = "";
 
-// Navigation State
-let activeTab = 'catalog'; // catalog, youtube, settings
+// Глобальная переменная для хранения данных ютуберов
+let globalYouTubeData = [];
+
+// Кнопки навигации (по ID)
+const navCatalog = document.getElementById('nav-catalog');
+const navYoutube = document.getElementById('nav-youtube');
+const navSettings = document.getElementById('nav-settings');
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedColor = localStorage.getItem('accentColor');
     if (savedColor) applyAccentColor(savedColor);
     else applyAccentColor('#d0bcff');
 
-    // Setup Navigation
-    if (navCatalog) navCatalog.addEventListener('click', () => switchTab('catalog'));
-    if (navYoutube) navYoutube.addEventListener('click', () => switchTab('youtube'));
-    if (navSettings) navSettings.addEventListener('click', () => switchTab('settings'));
+    // === ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК ===
+    if (navCatalog) {
+        navCatalog.addEventListener('click', () => {
+            updateActiveTab(navCatalog);
+            loadMods();
+        });
+    }
+
+    if (navYoutube) {
+        navYoutube.addEventListener('click', () => {
+            updateActiveTab(navYoutube);
+            loadYouTubeMods(); // Загрузка YouTube
+        });
+    }
+
+    if (navSettings) {
+        navSettings.addEventListener('click', () => {
+            updateActiveTab(navSettings);
+            renderSettings();
+        });
+    }
+    // ====================================
 
     let attempts = 0;
     const interval = setInterval(() => {
         attempts++;
         if (window.pywebview || attempts > 50) {
             checkEnvironment();
-            loadMods(); // Load default tab
+            loadMods();
             if (window.pywebview) clearInterval(interval);
         }
     }, 100);
@@ -76,6 +95,15 @@ document.addEventListener('DOMContentLoaded', () => {
     checkPing();
     setInterval(checkPing, 5000);
 });
+
+function updateActiveTab(activeBtn) {
+    // Сброс активного класса
+    [navCatalog, navYoutube, navSettings].forEach(btn => {
+        if(btn) btn.classList.remove('active');
+    });
+    // Установка нового
+    if(activeBtn) activeBtn.classList.add('active');
+}
 
 window.addEventListener('pywebviewready', checkEnvironment);
 
@@ -85,138 +113,6 @@ function showToast(msg) {
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 3000);
 }
-
-// === TAB SWITCHING LOGIC ===
-async function switchTab(tabName) {
-    if (activeTab === tabName) return;
-    activeTab = tabName;
-
-    // Update UI classes
-    [navCatalog, navYoutube, navSettings].forEach(btn => {
-        if(btn) btn.classList.remove('active');
-    });
-
-    if(tabName === 'catalog' && navCatalog) navCatalog.classList.add('active');
-    if(tabName === 'youtube' && navYoutube) navYoutube.classList.add('active');
-    if(tabName === 'settings' && navSettings) navSettings.classList.add('active');
-
-    // Fade out content
-    contentArea.classList.add('fade-out');
-
-    setTimeout(() => {
-        contentArea.innerHTML = ''; // Clear
-        contentArea.classList.remove('fade-out');
-        
-        if (tabName === 'catalog') {
-            renderMods(globalModsList);
-        } else if (tabName === 'youtube') {
-            loadYouTubeMods();
-        } else if (tabName === 'settings') {
-            renderSettings();
-        }
-    }, 250);
-}
-
-// === YOUTUBE LOGIC ===
-async function loadYouTubeMods() {
-    contentArea.innerHTML = '<div style="text-align:center; margin-top:50px; color:#888;">Загрузка YouTube модов...</div>';
-    try {
-        // Add cache bust
-        const res = await fetch(REPO_YOUTUBE_URL + '?t=' + Date.now());
-        if (!res.ok) throw new Error("Не удалось загрузить YouTube список");
-        globalYouTubeData = await res.json();
-        
-        if (!globalYouTubeData || globalYouTubeData.length === 0) {
-            contentArea.innerHTML = '<div style="text-align:center; margin-top:50px;">Список ютуберов пуст</div>';
-            return;
-        }
-        
-        // Select first youtuber by default
-        renderYouTubeView(globalYouTubeData[0].name);
-        
-    } catch (e) {
-        contentArea.innerHTML = `<div style="text-align:center; margin-top:50px; color:#f44336;">Ошибка: ${e.message}</div>`;
-    }
-}
-
-function renderYouTubeView(selectedYoutuberName) {
-    contentArea.innerHTML = '';
-    
-    // 1. Filter Bar (Chips)
-    const filterContainer = document.createElement('div');
-    filterContainer.className = 'youtuber-filter';
-    
-    globalYouTubeData.forEach(yt => {
-        const chip = document.createElement('div');
-        chip.className = 'filter-chip';
-        if (yt.name === selectedYoutuberName) chip.classList.add('active');
-        chip.innerText = yt.name;
-        chip.addEventListener('click', () => {
-            renderYouTubeView(yt.name); // Re-render with new selection
-        });
-        filterContainer.appendChild(chip);
-    });
-    
-    contentArea.appendChild(filterContainer);
-    
-    // 2. Find selected data
-    const selectedData = globalYouTubeData.find(y => y.name === selectedYoutuberName);
-    
-    // 3. Grid
-    const grid = document.createElement('div');
-    grid.className = 'content-grid';
-    
-    if (selectedData && selectedData.mods && selectedData.mods.length > 0) {
-        selectedData.mods.forEach(mod => {
-            // Reuse mod card logic, slightly simplified or same
-            // Ensure we map fields correctly if youtube json differs, but I assume standard structure:
-            // { id, name, description, image, file }
-            
-            let img = mod.image || "";
-            if(img && !img.startsWith('http')) img = REPO_BASE_URL + img;
-            if(!img) img = "https://via.placeholder.com/400x220/111/fff?text=No+Image";
-            
-            const isInst = globalInstalledIds.includes(mod.id);
-            
-            let btnText = 'Скачать';
-            let btnClass = 'install-btn';
-            let isDisabled = false;
-            // Note: YouTube mods might not be in 'buy.json', assuming free
-            
-            if (!window.pywebview) {
-                btnText = 'Доступно в приложении';
-                isDisabled = true;
-            } else if (isInst) {
-                btnText = 'Уже установлен';
-                btnClass = 'install-btn installed';
-                isDisabled = true;
-            }
-
-            const card = document.createElement('div');
-            card.className = 'mod-card';
-            card.innerHTML = `
-                <img src="${img}" class="card-image" loading="lazy">
-                <div class="card-content">
-                    <div class="card-author"><span>${selectedYoutuberName}</span></div>
-                    <div class="card-title">${mod.name}</div>
-                    <div class="card-desc">${mod.description || "Описание отсутствует"}</div>
-                    <button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="${!isDisabled ? `startInstallProcess('${mod.id}', '${mod.name}', '${mod.file}')` : ''}">
-                        <span class="material-symbols-outlined">download</span>
-                        ${btnText}
-                    </button>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    } else {
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666;">У этого ютубера пока нет модов</div>';
-    }
-    
-    contentArea.appendChild(grid);
-}
-
-
-// === EXISTING LOGIC ===
 
 async function checkForUpdates(manual = false) {
     if (!window.pywebview) {
@@ -342,13 +238,9 @@ function renderSettings() {
 async function checkEnvironment() {
     if (window.pywebview) {
         try {
-            const installed = await window.pywebview.api.check_installed_mods(globalModsList); // Need full list to check IDs?
-            // Actually check_installed_mods just checks IDs on disk, passing full list helps valid IDs
-            // But here we might not have loaded mods yet. 
-            // We'll update globalInstalledIds
+            const installed = await window.pywebview.api.check_installed_mods(globalModsList);
             globalInstalledIds = installed || [];
             
-            // Check Geo
             checkGeoRestriction();
         } catch (e) {
             console.log(e);
@@ -357,8 +249,6 @@ async function checkEnvironment() {
 }
 
 async function loadMods() {
-    if (activeTab !== 'catalog') return; // Only render if active
-    
     contentArea.innerHTML = '<div style="text-align:center; margin-top:50px; color:#888;">Загрузка каталога...</div>';
     try {
         const [modsRes, buyRes] = await Promise.all([
@@ -374,7 +264,6 @@ async function loadMods() {
         if (buyRes.ok) globalBuyList = await buyRes.json();
         else globalBuyList = [];
 
-        // Check installed
         if (window.pywebview) {
             const inst = await window.pywebview.api.check_installed_mods(mods);
             globalInstalledIds = inst;
@@ -382,7 +271,6 @@ async function loadMods() {
 
         renderMods(mods);
         
-        // Fade out splash
         if (splash && !splash.classList.contains('fade-out')) {
             splash.classList.add('fade-out');
         }
@@ -394,8 +282,6 @@ async function loadMods() {
 }
 
 function renderMods(mods) {
-    if (activeTab !== 'catalog') return;
-    
     contentArea.innerHTML = '';
     const grid = document.createElement('div');
     grid.className = 'content-grid';
@@ -487,7 +373,6 @@ if(infoActionBtn) infoActionBtn.addEventListener('click', () => infoModal.classL
 window.startInstallProcess = (id, name, url) => {
     if(!window.pywebview) return;
     
-    // Handle relative URLs
     if(url && !url.startsWith('http')) url = REPO_BASE_URL + url;
 
     installView.classList.remove('view-hidden');
@@ -523,11 +408,7 @@ window.finishInstall = (s, m) => {
         successView.classList.remove('view-hidden');
         setTimeout(() => {
             closeModal();
-            // Refresh lists to show installed status
-            if (activeTab === 'catalog') loadMods();
-            if (activeTab === 'youtube') renderYouTubeView(globalYouTubeData.find(y=>y.mods.some(m=>m.id===globalInstalledIds[0]))?.name || globalYouTubeData[0].name);
-            // Just re-fetching installed IDs would be better but full reload works
-            checkEnvironment(); 
+            loadMods(); // Обновляем список
         }, 2000);
     } else {
         if(m==="Canceled"){closeModal();}
@@ -542,22 +423,10 @@ window.finishInstall = (s, m) => {
 
 function openRepairModal() {
     const installedMods = globalModsList.filter(m => globalInstalledIds.includes(m.id));
-    // Also check youtube mods? 
-    // For simplicity, repair currently only shows catalog mods. 
-    // To add youtube mods, we'd need to scan globalYouTubeData too.
-    // Let's try to aggregate all known mods
-    
-    let allKnownMods = [...globalModsList];
-    globalYouTubeData.forEach(yt => {
-        allKnownMods = allKnownMods.concat(yt.mods);
-    });
-    
-    const myInstalled = allKnownMods.filter(m => globalInstalledIds.includes(m.id));
-    
     repairList.innerHTML = '';
-    if (myInstalled.length === 0) repairList.innerHTML = '<div style="text-align:center; color:#777;">Нет установленных модов для починки.</div>';
+    if (installedMods.length === 0) repairList.innerHTML = '<div style="text-align:center; color:#777;">Нет установленных модов для починки.</div>';
     else {
-        myInstalled.forEach(mod => {
+        installedMods.forEach(mod => {
             const item = document.createElement('div');
             item.className = 'repair-item';
             item.innerText = mod.name;
@@ -617,4 +486,94 @@ if (geoExitBtn) {
             geoModal.classList.add('hidden');
         }
     });
+}
+
+// === НОВАЯ ЛОГИКА ДЛЯ YOUTUBE ===
+async function loadYouTubeMods() {
+    contentArea.innerHTML = '<div style="text-align:center; margin-top:50px; color:#888;">Загрузка YouTube модов...</div>';
+    try {
+        const res = await fetch(REPO_YOUTUBE_URL + '?t=' + Date.now());
+        if (!res.ok) throw new Error("Не удалось загрузить YouTube список");
+        globalYouTubeData = await res.json();
+        
+        if (!globalYouTubeData || globalYouTubeData.length === 0) {
+            contentArea.innerHTML = '<div style="text-align:center; margin-top:50px;">Список ютуберов пуст</div>';
+            return;
+        }
+        
+        renderYouTubeView(globalYouTubeData[0].name);
+        
+    } catch (e) {
+        contentArea.innerHTML = `<div style="text-align:center; margin-top:50px; color:#f44336;">Ошибка: ${e.message}</div>`;
+    }
+}
+
+function renderYouTubeView(selectedYoutuberName) {
+    contentArea.innerHTML = '';
+    
+    // Фильтр
+    const filterContainer = document.createElement('div');
+    filterContainer.className = 'youtuber-filter';
+    
+    globalYouTubeData.forEach(yt => {
+        const chip = document.createElement('div');
+        chip.className = 'filter-chip';
+        if (yt.name === selectedYoutuberName) chip.classList.add('active');
+        chip.innerText = yt.name;
+        chip.addEventListener('click', () => {
+            renderYouTubeView(yt.name);
+        });
+        filterContainer.appendChild(chip);
+    });
+    
+    contentArea.appendChild(filterContainer);
+    
+    const selectedData = globalYouTubeData.find(y => y.name === selectedYoutuberName);
+    const grid = document.createElement('div');
+    grid.className = 'content-grid';
+    
+    if (selectedData && selectedData.mods && selectedData.mods.length > 0) {
+        selectedData.mods.forEach(mod => {
+            let img = mod.image || "";
+            if(img && !img.startsWith('http')) img = REPO_BASE_URL + img;
+            if(!img) img = "https://via.placeholder.com/400x220/111/fff?text=No+Image";
+            
+            // Здесь можно добавить проверку installedIds, если нужно, 
+            // но у ютуб модов могут быть свои ID
+            const isInst = globalInstalledIds.includes(mod.id);
+            
+            let btnText = 'Скачать';
+            let btnClass = 'install-btn';
+            let isDisabled = false;
+            
+            if (!window.pywebview) {
+                btnText = 'Доступно в приложении';
+                isDisabled = true;
+            } else if (isInst) {
+                btnText = 'Уже установлен';
+                btnClass = 'install-btn installed';
+                isDisabled = true;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'mod-card';
+            card.innerHTML = `
+                <img src="${img}" class="card-image" loading="lazy">
+                <div class="card-content">
+                    <div class="card-author"><span>${selectedYoutuberName}</span></div>
+                    <div class="card-title">${mod.name}</div>
+                    <div class="card-desc">${mod.description || "Описание отсутствует"}</div>
+                    <button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="${!isDisabled ? `startInstallProcess('${mod.id}', '${mod.name}', '${mod.file}')` : ''}">
+                        <span class="material-symbols-outlined">download</span>
+                        ${btnText}
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    } else {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666;">У этого ютубера пока нет модов</div>';
+    }
+    
+    contentArea.appendChild(grid);
 }
